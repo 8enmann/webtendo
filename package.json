@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Webtendo JS game platform",
   "dependencies": {
+    "dep-linker": "^1.0.24",
     "node-static": "0.7.7",
     "socket.io": "1.2.0",
     "webrtc-adapter": "^2.0.6"

@@ -1,13 +1,17 @@
 'use strict';
 
+var depLinker = require('dep-linker');
 var os = require('os');
 var nodeStatic = require('node-static');
 var http = require('http');
 var socketIO = require('socket.io');
 
-var fileServer = new(nodeStatic.Server)();
+
+depLinker.linkDependenciesTo('./public/scripts')
+  .then(() => console.log('Finished copying deps'));
+var file = new nodeStatic.Server('./public');
 var app = http.createServer(function(req, res) {
-  fileServer.serve(req, res);
+  file.serve(req, res);
 }).listen(8080);
 
 var io = socketIO.listen(app);
