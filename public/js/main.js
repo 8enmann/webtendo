@@ -41,6 +41,7 @@ var socket = io.connect();
 
 socket.on('ipaddr', function(ipaddr) {
   console.log('Server IP address is: ' + ipaddr);
+  document.getElementById('ip').innerText = ipaddr;
   // updateRoomURL(ipaddr);
 });
 
