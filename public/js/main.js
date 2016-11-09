@@ -16,20 +16,21 @@ var configuration = {
 var input = document.getElementById('input');
 var output = document.getElementById('output');
 var sendButton = document.getElementById('sendButton');
+const AUTO_PING = true;
 
 // Attach event handlers
 sendButton.addEventListener('click', () => {
   console.log('sending ' + input.value);
-  dataChannel.send(input.value);
+  dataChannel.send(JSON.stringify({
+    data: input.value,
+    action: 'text',
+  }));
 });
 
 // Create a random room if not already present in the URL.
-var isInitiator;
-var room = window.location.hash.substring(1);
-if (!room) {
-  room = window.location.hash = randomToken();
-}
-room = 'foo';
+var isHost = window.location.pathname.includes('host');
+// TODO: get room from server based on external IP, then store in window.location.hash
+var room = 'foo';
 
 /****************************************************************************
 * Signaling server
@@ -45,13 +46,11 @@ socket.on('ipaddr', function(ipaddr) {
 
 socket.on('created', function(room, clientId) {
   console.log('Created room', room, '- my client ID is', clientId);
-  isInitiator = true;
 });
 
 socket.on('joined', function(room, clientId) {
   console.log('This peer has joined room', room, 'with client ID', clientId);
-  isInitiator = false;
-  createPeerConnection(isInitiator, configuration);
+  createPeerConnection(isHost, configuration);
 });
 
 socket.on('full', function(room) {
@@ -64,7 +63,7 @@ socket.on('full', function(room) {
 
 socket.on('ready', function() {
   console.log('Socket is ready');
-  createPeerConnection(isInitiator, configuration);
+  createPeerConnection(isHost, configuration);
 });
 
 socket.on('log', function(array) {
@@ -134,8 +133,8 @@ function signalingMessageCallback(message) {
 }
 }
 
-function createPeerConnection(isInitiator, config) {
-  console.log('Creating Peer connection as initiator?', isInitiator, 'config:',
+function createPeerConnection(isHost, config) {
+  console.log('Creating Peer connection as initiator?', isHost, 'config:',
               config);
   peerConn = new RTCPeerConnection(config);
 
@@ -154,7 +153,7 @@ function createPeerConnection(isInitiator, config) {
     }
   };
 
-  if (isInitiator) {
+  if (isHost) {
     console.log('Creating Data Channel');
     dataChannel = peerConn.createDataChannel('photos');
     onDataChannelCreated(dataChannel);
@@ -183,11 +182,36 @@ function onDataChannelCreated(channel) {
 
   channel.onopen = function() {
     console.log('CHANNEL opened!!!');
+    if (AUTO_PING) {
+      var cancel = window.setInterval(() => {
+	try {
+	dataChannel.send(JSON.stringify({
+	  action: 'echo',
+	  time: performance.now(),
+	}));
+	} catch (e) {
+	  console.error(e);
+	  window.clearInterval(cancel);
+	}
+      }, 1000);
+    }
   };
 
   channel.onmessage = (event) => {
-    console.log(event);
-    output.value = event.data;
+    // console.log(event);
+    var x = JSON.parse(event.data);
+    if (x.action === 'echo') {
+      x.action = 'lag';
+      dataChannel.send(JSON.stringify(x));
+    } else if (x.action == 'text') {
+      output.value = x.data;
+    } else if (x.action == 'lag') {
+      var str = 'round trip latency ' + (performance.now() - x.time).toFixed(2) + ' ms';
+      // console.log(str);
+      document.getElementById('latency').innerText = str;
+    } else {
+      console.log('unknown action');
+    }
   };
 }
 

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <title>Webtendo</title>
+
+  <link rel="stylesheet" href="/css/main.css" />
+  <meta name="viewport" content="width=device-width">
+  
+</head>
+
+<body>
+
+  <h1>Webtendo client</h1>
+
+  <textarea id="input"
+    placeholder="Press Start, enter some text, then press Send."></textarea>
+  <textarea id="output" disabled></textarea>
+
+  <div id="buttons">
+    <button id="sendButton">Send</button>
+  </div>
+  <div id="latency">Connecting...<div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="scripts/webrtc-adapter/out/adapter.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+
+</html>
