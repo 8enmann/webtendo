@@ -21,18 +21,24 @@ io.sockets.on('connection', function(socket) {
   function log() {
     var array = ['Message from server:'];
     array.push.apply(array, arguments);
-    socket.emit('log', array);
+    // socket.emit('log', array);
     console.log(array);
   }
 
-  socket.on('message', function(message) {
+  // Message passthrough, client expects 'type' property.
+  socket.on('message', (message) => {
     log('Client said: ', message);
-    // for a real app, would be room-only (not broadcast)
-    socket.broadcast.emit('message', message);
+    if (message.recipient) {
+      io.to(socketid).emit('message', message);
+    } else {
+      // for a real app, would be room-only (not broadcast)
+      // TODO: make this room-only
+      socket.broadcast.emit('message', message);
+    }
   });
 
-  socket.on('create or join', function(room) {
-    log('Received request to create or join room ' + room + ' from ' + socket.handshake.address + '//' + socket.request.connection.remoteAddress);
+  socket.on('create or join', function(room, clientId) {
+    log('create or join room ' + room + ' from ' + clientId + ' ' + socket.handshake.address + '//' + socket.request.connection.remoteAddress);
 
     
     var numClients = io.sockets.sockets.length;
@@ -41,14 +47,14 @@ io.sockets.on('connection', function(socket) {
     if (numClients === 1) {
       socket.join(room);
       log('Client ID ' + socket.id + ' created room ' + room);
-      socket.emit('created', room, socket.id);
+      socket.emit('created', room, clientId);
 
     } else if (numClients < 10) {
       log('Client ID ' + socket.id + ' joined room ' + room);
       io.sockets.in(room).emit('join', room);
       socket.join(room);
       socket.emit('joined', room, socket.id);
-      io.sockets.in(room).emit('ready');
+      io.sockets.in(room).emit('ready', room, clientId);
     } else { // max two clients
       socket.emit('full', room);
     }

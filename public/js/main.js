@@ -31,6 +31,15 @@ sendButton.addEventListener('click', () => {
 var isHost = window.location.pathname.includes('host');
 // TODO: get room from server based on external IP, then store in window.location.hash
 var room = 'foo';
+// Use session storage to maintain connections across refresh but allow
+// multiple tabs in the same browser for testing purposes.
+// Not to be confused with socket ID.
+var clientId = sessionStorage.getItem('clientId');
+if (!clientId) {
+  clientId = Math.random().toString(36).substr(2, 10);
+  sessionStorage.setItem('clientId', clientId);
+}
+console.log('Session clientId ' + clientId);
 
 /****************************************************************************
 * Signaling server
@@ -41,7 +50,10 @@ var socket = io.connect();
 
 socket.on('ipaddr', function(ipaddr) {
   console.log('Server IP address is: ' + ipaddr);
-  document.getElementById('ip').innerText = ipaddr;
+  // TODO: actually should display host IP not server
+  if (isHost) {
+    document.getElementById('ip').innerText = ipaddr;
+  }
   // updateRoomURL(ipaddr);
 });
 
@@ -51,7 +63,8 @@ socket.on('created', function(room, clientId) {
 
 socket.on('joined', function(room, clientId) {
   console.log('This peer has joined room', room, 'with client ID', clientId);
-  createPeerConnection(isHost, configuration);
+  // Commented out below since it appears redundant with 'ready' below.
+  // createPeerConnection(isHost, configuration);
 });
 
 socket.on('full', function(room) {
@@ -62,9 +75,9 @@ socket.on('full', function(room) {
   // TODO: remove this
 });
 
-socket.on('ready', function() {
+socket.on('ready', function(room, clientId) {
   console.log('Socket is ready');
-  createPeerConnection(isHost, configuration);
+  createPeerConnection(isHost, configuration, clientId);
 });
 
 socket.on('log', function(array) {
@@ -77,7 +90,7 @@ socket.on('message', function(message) {
 });
 
 // Join a room
-socket.emit('create or join', room);
+socket.emit('create or join', room, clientId);
 
 if (location.hostname.match(/localhost|127\.0\.0/)) {
   socket.emit('ipaddr');
@@ -86,7 +99,9 @@ if (location.hostname.match(/localhost|127\.0\.0/)) {
 /**
 * Send message to signaling server
 */
-function sendMessage(message) {
+function sendMessage(message, recipient) {
+  message.recipient = recipient;
+  message.sender = clientId;
   console.log('Client sending message: ', message);
   socket.emit('message', message);
 }
@@ -110,14 +125,16 @@ function sendMessage(message) {
 ****************************************************************************/
 
 var peerConn;
+// dataChannel.label is the clientId of the recipient.
 var dataChannel;
 
 function signalingMessageCallback(message) {
+  // TODO: if got an offer and isHost, ignore?
   if (message.type === 'offer') {
     console.log('Got offer. Sending answer to peer.');
     peerConn.setRemoteDescription(new RTCSessionDescription(message), function() {},
                                   logError);
-    peerConn.createAnswer(onLocalSessionCreated, logError);
+    peerConn.createAnswer(onLocalSessionCreated(message.sender), logError);
 
   } else if (message.type === 'answer') {
     console.log('Got answer.');
@@ -130,12 +147,15 @@ function signalingMessageCallback(message) {
     }));
 
   } else if (message === 'bye') {
-// TODO: cleanup RTC connection?
-}
+    // TODO: cleanup RTC connection?
+  }
 }
 
-function createPeerConnection(isHost, config) {
-  console.log('Creating Peer connection as initiator?', isHost, 'config:',
+// clientId: who to connect to?
+// isHost: Am I the initiator?
+// config: for RTCPeerConnection, contains STUN/TURN servers.
+function createPeerConnection(isHost, config, recipientClientId) {
+  console.log('Creating Peer connection. isHost?', isHost, 'recipient', recipientClientId, 'config:',
               config);
   peerConn = new RTCPeerConnection(config);
 
@@ -145,6 +165,7 @@ function createPeerConnection(isHost, config) {
     if (event.candidate) {
       sendMessage({
 	type: 'candidate',
+	recipient: recipientClientId,
 	label: event.candidate.sdpMLineIndex,
 	id: event.candidate.sdpMid,
 	candidate: event.candidate.candidate
@@ -156,13 +177,13 @@ function createPeerConnection(isHost, config) {
 
   if (isHost) {
     console.log('Creating Data Channel');
-    dataChannel = peerConn.createDataChannel('photos');
+    dataChannel = peerConn.createDataChannel(recipientClientId);
     onDataChannelCreated(dataChannel);
 
     console.log('Creating an offer');
-    peerConn.createOffer(onLocalSessionCreated, logError);
+    peerConn.createOffer(onLocalSessionCreated(recipientClientId), logError);
   } else {
-    peerConn.ondatachannel = function(event) {
+    peerConn.ondatachannel = (event) => {
       console.log('ondatachannel:', event.channel);
       dataChannel = event.channel;
       onDataChannelCreated(dataChannel);
@@ -170,28 +191,33 @@ function createPeerConnection(isHost, config) {
   }
 }
 
-function onLocalSessionCreated(desc) {
-  console.log('local session created:', desc);
-  peerConn.setLocalDescription(desc, function() {
-    console.log('sending local desc:', peerConn.localDescription);
-    sendMessage(peerConn.localDescription);
-  }, logError);
+function onLocalSessionCreated(recipientClientId) {
+  return (desc) => {
+    console.log('local session created:', desc);
+    peerConn.setLocalDescription(desc, () => {
+      console.log('sending local desc:', peerConn.localDescription);
+      sendMessage(peerConn.localDescription, recipientClientId);
+    }, logError);
+  };
 }
 
 function onDataChannelCreated(channel) {
   console.log('onDataChannelCreated:', channel);
 
-  channel.onopen = function() {
-    console.log('CHANNEL opened!!!');
+  channel.onopen = () => {
+    console.log('Data channel opened to ' + channel.label);
     if (AUTO_PING) {
+      // As long as the channel is open, send a message 1/sec to
+      // measure latency and verify everything works
       var cancel = window.setInterval(() => {
 	try {
-	dataChannel.send(JSON.stringify({
-	  action: 'echo',
-	  time: performance.now(),
-	}));
+	  dataChannel.send(JSON.stringify({
+	    action: 'echo',
+	    time: performance.now(),
+	  }));
 	} catch (e) {
 	  console.error(e);
+	  
 	  window.clearInterval(cancel);
 	}
       }, 1000);
