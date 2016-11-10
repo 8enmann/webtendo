@@ -21,10 +21,12 @@ const AUTO_PING = true;
 // Attach event handlers
 sendButton.addEventListener('click', () => {
   console.log('sending ' + input.value);
-  dataChannel.send(JSON.stringify({
-    data: input.value,
-    action: 'text',
-  }));
+  for (var dataChannel in dataChannels) {
+    dataChannels[dataChannel].send(JSON.stringify({
+      data: input.value,
+      action: 'text',
+    }));
+  }
 });
 
 // Create a random room if not already present in the URL.
@@ -84,13 +86,10 @@ socket.on('log', function(array) {
   console.log.apply(console, array);
 });
 
-socket.on('message', function(message) {
-  console.log('Client received message:', message);
-  signalingMessageCallback(message);
-});
+socket.on('message', signalingMessageCallback);
 
 // Join a room
-socket.emit('create or join', room, clientId);
+socket.emit('create or join', room, clientId, isHost);
 
 if (location.hostname.match(/localhost|127\.0\.0/)) {
   socket.emit('ipaddr');
@@ -100,10 +99,13 @@ if (location.hostname.match(/localhost|127\.0\.0/)) {
 * Send message to signaling server
 */
 function sendMessage(message, recipient) {
-  message.recipient = recipient;
-  message.sender = clientId;
-  console.log('Client sending message: ', message);
-  socket.emit('message', message);
+  var payload = {
+    recipient: recipient,
+    sender: clientId,
+    rtcSessionDescription: message,
+  };
+  console.log('Client sending message: ', payload);
+  socket.emit('message', room, payload);
 }
 
 /**
@@ -124,26 +126,30 @@ function sendMessage(message, recipient) {
 * WebRTC peer connection and data channel
 ****************************************************************************/
 
-var peerConn;
+var peerConns = {};
 // dataChannel.label is the clientId of the recipient.
-var dataChannel;
+var dataChannels = {};
 
 function signalingMessageCallback(message) {
+  console.log('Client received message:', message);
+  var peerConn = peerConns[isHost ? message.sender : clientId];
+  console.log(peerConn);
   // TODO: if got an offer and isHost, ignore?
-  if (message.type === 'offer') {
+  if (message.rtcSessionDescription.type === 'offer') {
     console.log('Got offer. Sending answer to peer.');
-    peerConn.setRemoteDescription(new RTCSessionDescription(message), function() {},
+    peerConn.setRemoteDescription(new RTCSessionDescription(message.rtcSessionDescription), function() {},
                                   logError);
     peerConn.createAnswer(onLocalSessionCreated(message.sender), logError);
 
-  } else if (message.type === 'answer') {
+  } else if (message.rtcSessionDescription.type === 'answer') {
     console.log('Got answer.');
-    peerConn.setRemoteDescription(new RTCSessionDescription(message), function() {},
+    peerConn.setRemoteDescription(new RTCSessionDescription(message.rtcSessionDescription), function() {},
                                   logError);
 
-  } else if (message.type === 'candidate') {
+  } else if (message.rtcSessionDescription.type === 'candidate') {
+    
     peerConn.addIceCandidate(new RTCIceCandidate({
-      candidate: message.candidate
+      candidate: message.rtcSessionDescription.candidate
     }));
 
   } else if (message === 'bye') {
@@ -155,21 +161,25 @@ function signalingMessageCallback(message) {
 // isHost: Am I the initiator?
 // config: for RTCPeerConnection, contains STUN/TURN servers.
 function createPeerConnection(isHost, config, recipientClientId) {
+  // TODO: consider only emitting join messages to hosts and removing this.
+  if (dataChannels[recipientClientId] && dataChannels[recipientClientId].readyState === 'open') {
+    console.log('already connected to', recipientClientId, ', bailing');
+    return;
+  }
   console.log('Creating Peer connection. isHost?', isHost, 'recipient', recipientClientId, 'config:',
               config);
-  peerConn = new RTCPeerConnection(config);
+  peerConns[recipientClientId] = new RTCPeerConnection(config);
 
   // send any ice candidates to the other peer
-  peerConn.onicecandidate = function(event) {
+  peerConns[recipientClientId].onicecandidate = function(event) {
     console.log('icecandidate event:', event);
     if (event.candidate) {
       sendMessage({
 	type: 'candidate',
-	recipient: recipientClientId,
 	label: event.candidate.sdpMLineIndex,
 	id: event.candidate.sdpMid,
 	candidate: event.candidate.candidate
-      });
+      }, recipientClientId);
     } else {
       console.log('End of candidates.');
     }
@@ -177,22 +187,23 @@ function createPeerConnection(isHost, config, recipientClientId) {
 
   if (isHost) {
     console.log('Creating Data Channel');
-    dataChannel = peerConn.createDataChannel(recipientClientId);
-    onDataChannelCreated(dataChannel);
+    dataChannels[recipientClientId] = peerConns[recipientClientId].createDataChannel(recipientClientId);
+    onDataChannelCreated(dataChannels[recipientClientId]);
 
     console.log('Creating an offer');
-    peerConn.createOffer(onLocalSessionCreated(recipientClientId), logError);
+    peerConns[recipientClientId].createOffer(onLocalSessionCreated(recipientClientId), logError);
   } else {
-    peerConn.ondatachannel = (event) => {
+    peerConns[recipientClientId].ondatachannel = (event) => {
       console.log('ondatachannel:', event.channel);
-      dataChannel = event.channel;
-      onDataChannelCreated(dataChannel);
+      dataChannels[recipientClientId] = event.channel;
+      onDataChannelCreated(dataChannels[recipientClientId]);
     };
   }
 }
 
 function onLocalSessionCreated(recipientClientId) {
   return (desc) => {
+    var peerConn = peerConns[isHost ? recipientClientId : clientId];
     console.log('local session created:', desc);
     peerConn.setLocalDescription(desc, () => {
       console.log('sending local desc:', peerConn.localDescription);
@@ -211,7 +222,7 @@ function onDataChannelCreated(channel) {
       // measure latency and verify everything works
       var cancel = window.setInterval(() => {
 	try {
-	  dataChannel.send(JSON.stringify({
+	  channel.send(JSON.stringify({
 	    action: 'echo',
 	    time: performance.now(),
 	  }));
@@ -229,7 +240,7 @@ function onDataChannelCreated(channel) {
     var x = JSON.parse(event.data);
     if (x.action === 'echo') {
       x.action = 'lag';
-      dataChannel.send(JSON.stringify(x));
+      channel.send(JSON.stringify(x));
     } else if (x.action == 'text') {
       output.value = x.data;
     } else if (x.action == 'lag') {

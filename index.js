@@ -14,6 +14,8 @@ var app = http.createServer(function(req, res) {
   file.serve(req, res);
 }).listen(8080);
 
+var hosts = {};
+var clients = {};
 var io = socketIO.listen(app);
 io.sockets.on('connection', function(socket) {
 
@@ -26,30 +28,31 @@ io.sockets.on('connection', function(socket) {
   }
 
   // Message passthrough, client expects 'type' property.
-  socket.on('message', (message) => {
+  socket.on('message', (room, message) => {
     log('Client said: ', message);
     if (message.recipient) {
-      io.to(socketid).emit('message', message);
+      io.to(clients[message.recipient]).emit('message', message);
     } else {
-      // for a real app, would be room-only (not broadcast)
-      // TODO: make this room-only
-      socket.broadcast.emit('message', message);
+      io.to(room).emit('message', message);
     }
   });
 
-  socket.on('create or join', function(room, clientId) {
+  socket.on('create or join', function(room, clientId, isHost) {
     log('create or join room ' + room + ' from ' + clientId + ' ' + socket.handshake.address + '//' + socket.request.connection.remoteAddress);
-
-    
+    clients[clientId] = socket.id;
+    // TODO: io.sockets.adapter.rooms['my_room'].length;
     var numClients = io.sockets.sockets.length;
     log('Room ' + room + ' now has ' + numClients + ' client(s)');
 
-    if (numClients === 1) {
+    if (isHost) {
       socket.join(room);
-      log('Client ID ' + socket.id + ' created room ' + room);
+      hosts[room] = clientId;
       socket.emit('created', room, clientId);
+      // TODO: emit something that gets the host to pick up existing connections. Broadcast to the room to rejoin?
+      return;
+    }
 
-    } else if (numClients < 10) {
+    if (numClients < 10) {
       log('Client ID ' + socket.id + ' joined room ' + room);
       io.sockets.in(room).emit('join', room);
       socket.join(room);

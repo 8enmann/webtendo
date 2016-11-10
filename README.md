@@ -13,9 +13,9 @@ Visit http://localhost:8080 in two tabs
 - [x] Send data directly between local network devices
 - [x] Performance analysis
 - [x] Master/slave mode
-- [ ] Multiple clients
-- [ ] Automatic connection integrity
+- [x] Multiple clients
 - [ ] Standard "controllers" w/ forwarded touch events
+- [ ] Automatic connection integrity
 - [ ] Automatic/manual room determination based on external IP
 - [ ] Example game
 - [ ] Game save API
