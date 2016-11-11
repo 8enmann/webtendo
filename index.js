@@ -40,24 +40,27 @@ io.sockets.on('connection', function(socket) {
   socket.on('create or join', function(room, clientId, isHost) {
     log('create or join room ' + room + ' from ' + clientId + ' ' + socket.handshake.address + '//' + socket.request.connection.remoteAddress);
     clients[clientId] = socket.id;
-    // TODO: io.sockets.adapter.rooms['my_room'].length;
-    var numClients = io.sockets.sockets.length;
-    log('Room ' + room + ' now has ' + numClients + ' client(s)');
 
+    console.log(isHost);
     if (isHost) {
       socket.join(room);
       hosts[room] = clientId;
-      socket.emit('created', room, clientId);
-      // TODO: emit something that gets the host to pick up existing connections. Broadcast to the room to rejoin?
+      io.to(room).emit('created', room, clientId);
       return;
     }
-
+    if (!io.sockets.adapter.rooms[room]) {
+      socket.emit('nohost');
+      return;
+    }
+    var numClients = io.sockets.adapter.rooms[room].length;
+    log('Room ' + room + ' now has ' + numClients + ' client(s)');
     if (numClients < 10) {
       log('Client ID ' + socket.id + ' joined room ' + room);
-      io.sockets.in(room).emit('join', room);
       socket.join(room);
-      socket.emit('joined', room, socket.id);
-      io.sockets.in(room).emit('ready', room, clientId);
+      // Tell host to send an offer.
+      io.to(clients[hosts[room]]).emit('joined', room, clientId);
+      // Echo back to sender so they know they joined successfully.
+      socket.emit('joined', room, clientId);
     } else { // max two clients
       socket.emit('full', room);
     }

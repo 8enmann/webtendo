@@ -59,14 +59,14 @@ socket.on('ipaddr', function(ipaddr) {
   // updateRoomURL(ipaddr);
 });
 
-socket.on('created', function(room, clientId) {
+socket.on('created', function(room, hostClientId) {
   console.log('Created room', room, '- my client ID is', clientId);
-});
-
-socket.on('joined', function(room, clientId) {
-  console.log('This peer has joined room', room, 'with client ID', clientId);
-  // Commented out below since it appears redundant with 'ready' below.
-  // createPeerConnection(isHost, configuration);
+  if (!isHost) {
+    // Get dangling clients to reconnect if a host stutters.
+    peerConns = {};
+    dataChannels = {};
+    socket.emit('create or join', room, clientId, isHost);
+  }
 });
 
 socket.on('full', function(room) {
@@ -77,8 +77,8 @@ socket.on('full', function(room) {
   // TODO: remove this
 });
 
-socket.on('ready', function(room, clientId) {
-  console.log('Socket is ready');
+socket.on('joined', function(room, clientId) {
+  console.log(clientId, 'joined');
   createPeerConnection(isHost, configuration, clientId);
 });
 
@@ -87,6 +87,8 @@ socket.on('log', function(array) {
 });
 
 socket.on('message', signalingMessageCallback);
+
+socket.on('nohost', () => console.error('No host'));
 
 // Join a room
 socket.emit('create or join', room, clientId, isHost);
@@ -161,11 +163,6 @@ function signalingMessageCallback(message) {
 // isHost: Am I the initiator?
 // config: for RTCPeerConnection, contains STUN/TURN servers.
 function createPeerConnection(isHost, config, recipientClientId) {
-  // TODO: consider only emitting join messages to hosts and removing this.
-  if (dataChannels[recipientClientId] && dataChannels[recipientClientId].readyState === 'open') {
-    console.log('already connected to', recipientClientId, ', bailing');
-    return;
-  }
   console.log('Creating Peer connection. isHost?', isHost, 'recipient', recipientClientId, 'config:',
               config);
   peerConns[recipientClientId] = new RTCPeerConnection(config);
