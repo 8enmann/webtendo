@@ -6,7 +6,7 @@
     <title>Webtendo</title>
 
     <link rel="stylesheet" href="/css/main.css" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <style>
      #latency {
        position: absolute;
@@ -17,44 +17,49 @@
     </style>
   </head>
   <body>
-    <div class="ctrl-left">
+    <div class="ctrl-left touch-region" data-buttonvalue="stick">
       <div id="joystick">
 	<div id="stick"></div>
       </div>
     </div>
     <div id="buttonBox">
-      <button data-buttonvalue="a" class="a">A</button>
-      <button data-buttonvalue="b" class="b">B</button>
+      <button data-buttonvalue="a" class="a touch-region">A</button>
+      <button data-buttonvalue="b" class="b touch-region">B</button>
     </div>
     <div id="latency">Connecting...</div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="scripts/webrtc-adapter/out/adapter.js"></script>
     <script src="js/main.js"></script>
     <script>
-     if (!screen.orientation.type.includes('landscape')) {
-       screen.orientation.lock('landscape')
-	     .then(()=> console.log('switched to landscape'),
-		   err => {
-		     console.error(err);
-		     window.alert('please rotate device');
-		   });
-     }
+     // Disable zoom on iOS 10.
+     document.addEventListener('gesturestart', function (e) {
+       e.preventDefault();
+     });
+
      // This can only be called in an onclick handler
-     // TODO: stick this inside a button.
+     // TODO: stick this inside a dedicated button.
      var joystick = document.getElementById('joystick');
      var stick = document.getElementById('stick');
-     //joystick.addEventListener('touchstart', fullscreen);
+     // TODO: replace this with sindresorhus/screenfull.js
+     joystick.addEventListener('touchstart', fullscreen);
      function fullscreen(e) {
        document.documentElement.webkitRequestFullScreen();
        joystick.removeEventListener('touchstart', fullscreen);
+       if (!screen.orientation.type.includes('landscape')) {
+	 screen.orientation.lock('landscape')
+	       .then(()=> console.log('switched to landscape'),
+		     err => {
+		       console.error(err);
+		       window.alert('please rotate device');
+		     });
+       }
+
      }
      function moveStick(x,y) {
        let radius = joystick.offsetWidth/2;
-       // TODO: Check to see if the point is out of bounds and if so, clip.
-       let theta = Math.atan2((y - radius), (x - radius));
-       // console.log((y- radius).toFixed(1), (x - radius).toFixed(1), theta/2/Math.PI * 360);
+       // Check to see if the point is out of bounds and if so, clip.
        let distance = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
-       console.log(Math.floor(x - radius), Math.floor(y - radius), Math.floor(distance));
+       let theta = Math.atan2((y - radius), (x - radius));
        if (distance > (radius - stick.offsetWidth/2)) {
 	 stick.style.backgroundColor = 'red';
 	 x = (radius - stick.offsetWidth/2) * Math.cos(theta) + radius;
@@ -68,23 +73,61 @@
 
        stick.style.left = newLeft + 'px';
        stick.style.top = newTop + 'px';
-       // TODO: Tell host what happened.
+       return {
+	 x: Math.cos(theta),
+	 y: - Math.sin(theta),
+       };
+     }
+     let regions = document.getElementsByClassName('touch-region');
+     function getRegion(x, y) {
+       let check = (x, left, width) => x >= left && x <= left + width;
+       for (let region of regions) {
+	 if (check(x, region.offsetLeft, region.offsetWidth) && check(y, region.offsetTop, region.offsetHeight)) {
+	   return region.dataset.buttonvalue;
+	 }
+       }
      }
      function handleJoystickTouch(e) {
        e.preventDefault();
        // console.log(e);
        var touches = e.changedTouches;
        for (var i = 0; i < touches.length; i++) {
-	 // console.log(touches[i]);
-	 moveStick(touches[i].pageX - joystick.offsetLeft, touches[i].pageY - joystick.offsetTop);
+	 // Any touches elsewhere while a finger is down on the joystick will
+	 // block input on the rest of the screen.
+	 let region = getRegion(touches[i].pageX, touches[i].pageY);
+	 // In joystick part of screen.
+	 if (region === 'stick') {
+	   let position = {x: 0, y: 0};
+	   if (e.type === 'touchend') {
+	     resetStick();
+	   } else {
+	     position = moveStick(touches[i].pageX - joystick.offsetLeft, touches[i].pageY - joystick.offsetTop);
+	   }
+	   dataChannels[clientId].send(JSON.stringify({
+	     action: e.type,
+	     value: region,
+	     position: position,
+	   }));
+	 } else {
+	   // In button part of screen. Ignore moves.
+	   // TODO: fix highlighting.
+	   if (e.type !== 'touchmove') {
+	     dataChannels[clientId].send(JSON.stringify({
+	       action: e.type,
+	       value: region,
+	     }));
+	   }
+	 }
        }
+       // return true;
      }
-     joystick.addEventListener('touchstart', handleJoystickTouch);
-     joystick.addEventListener('touchmove', handleJoystickTouch);
-     joystick.addEventListener('touchend', resetStick);
+     document.body.addEventListener('touchstart', handleJoystickTouch);
+     document.body.addEventListener('touchmove', handleJoystickTouch);
+     document.body.addEventListener('touchend', handleJoystickTouch);
      function resetStick() {
        moveStick(joystick.offsetHeight/2, joystick.offsetWidth/2);
      }
+     // TODO: call this again on screen orientation change.
      resetStick();
      
     </script>
