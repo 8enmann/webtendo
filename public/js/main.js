@@ -26,6 +26,7 @@ function broadcast(message) {
   }
 };
 
+var onClientMessage;
 // Create a random room if not already present in the URL.
 var isHost = window.location.pathname.includes('host');
 // TODO: get room from server based on external IP, then store in window.location.hash
@@ -51,7 +52,7 @@ socket.on('ipaddr', function(ipaddr) {
   console.log('Server IP address is: ' + ipaddr);
   // TODO: actually should display host IP not server
   if (isHost) {
-    document.getElementById('ip').innerText = ipaddr;
+    document.getElementById('ip').innerText = 'Clients connect to ' + ipaddr;
   }
   // updateRoomURL(ipaddr);
 });
@@ -242,6 +243,9 @@ function onDataChannelCreated(channel) {
       var str = 'round trip latency ' + (performance.now() - x.time).toFixed(2) + ' ms';
       // console.log(str);
       document.getElementById('latency').innerText = str;
+    } else if (onClientMessage) {
+      x.clientId = channel.label;
+      onClientMessage(x);
     } else {
       console.log('unknown action');
     }

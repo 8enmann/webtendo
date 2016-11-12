@@ -16,7 +16,7 @@ Visit http://localhost:8080 in two tabs
 - [x] Master/slave mode
 - [x] Multiple clients
 - [x] Automatic connection integrity (refresh robust)
-- [ ] Standard "controllers" w/ forwarded touch events
+- [x] Standard "controller" w/ forwarded touch events
 - [ ] Automatic/manual room determination based on external IP
 - [ ] Example game
 - [ ] Game save API
