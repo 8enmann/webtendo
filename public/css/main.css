@@ -4,12 +4,8 @@ body {
   color:white;
   margin: 0;
   padding: 0;
-  justify-content: space-between;
-  display: flex;
   height: 100vh;
   width: 100vw;
-  align-items: center;
-
 }
 
 button {
@@ -27,58 +23,4 @@ button {
     -webkit-user-select: none; /* for button */
        -moz-user-select: none;
         -ms-user-select: none;
-}
-
-#buttonBox {
-  /* right: 0; */
-  /* position:absolute; */
-  /* 100% doesn't account for status bar.... :( */
-  height: 100%;
-  width:50%;
-  display: flex;
-  flex-direction: column;
-}
-
-.a,
-.b {
-  display:block;
-  width: 100%;
-  flex: 1;
-  font-size: 3em;
-  border-radius: 5px;
-}
-
-.a {
-  background-color: #3F51B5;
-}
-.b {
-  background-color: #E91E63;
-}
-
-button:active {
-  opacity: .5;
-}
-
-#joystick {
-  width: 80vh;
-  height: 80vh;
-  border-radius: 50%;
-  background-color: #2196F3;
-}
-
-#stick {
-  width: 2rem;
-  height: 2rem;
-  position:relative;
-  top:calc(50% - 15px);
-  left: calc(50% - 15px);
-  border-radius: 50%;
-  background-color: white;
-  border: solid black 1px;
-}
-
-.ctrl-left {
-    display: flex;
-    flex: 1;
-    justify-content: center;
 }
