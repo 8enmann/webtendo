@@ -3,7 +3,8 @@ Multiplayer JS game platform
 
 # Run
 ```bash
-npm index.js
+npm install
+node index.js
 ```
 
 Visit http://localhost:8080 in two tabs

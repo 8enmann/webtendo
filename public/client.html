@@ -1,31 +1,93 @@
 <!DOCTYPE html>
 <html>
 
-<head>
+  <head>
 
-  <title>Webtendo</title>
+    <title>Webtendo</title>
 
-  <link rel="stylesheet" href="/css/main.css" />
-  <meta name="viewport" content="width=device-width">
-  
-</head>
+    <link rel="stylesheet" href="/css/main.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <style>
+     #latency {
+       position: absolute;
+       bottom: 0;
+       margin: 10px;
+       opacity: .5;
+     }
+    </style>
+  </head>
+  <body>
+    <div class="ctrl-left">
+      <div id="joystick">
+	<div id="stick"></div>
+      </div>
+    </div>
+    <div id="buttonBox">
+      <button data-buttonvalue="a" class="a">A</button>
+      <button data-buttonvalue="b" class="b">B</button>
+    </div>
+    <div id="latency">Connecting...</div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="scripts/webrtc-adapter/out/adapter.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+     if (!screen.orientation.type.includes('landscape')) {
+       screen.orientation.lock('landscape')
+	     .then(()=> console.log('switched to landscape'),
+		   err => {
+		     console.error(err);
+		     window.alert('please rotate device');
+		   });
+     }
+     // This can only be called in an onclick handler
+     // TODO: stick this inside a button.
+     var joystick = document.getElementById('joystick');
+     var stick = document.getElementById('stick');
+     //joystick.addEventListener('touchstart', fullscreen);
+     function fullscreen(e) {
+       document.documentElement.webkitRequestFullScreen();
+       joystick.removeEventListener('touchstart', fullscreen);
+     }
+     function moveStick(x,y) {
+       let radius = joystick.offsetWidth/2;
+       // TODO: Check to see if the point is out of bounds and if so, clip.
+       let theta = Math.atan2((y - radius), (x - radius));
+       // console.log((y- radius).toFixed(1), (x - radius).toFixed(1), theta/2/Math.PI * 360);
+       let distance = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
+       console.log(Math.floor(x - radius), Math.floor(y - radius), Math.floor(distance));
+       if (distance > (radius - stick.offsetWidth/2)) {
+	 stick.style.backgroundColor = 'red';
+	 x = (radius - stick.offsetWidth/2) * Math.cos(theta) + radius;
+	 y = (radius - stick.offsetWidth/2) * Math.sin(theta) + radius;
+       } else {
+	 stick.style.backgroundColor = 'white';
+       }
 
-<body>
+       let newLeft = x - stick.offsetWidth / 2;
+       let newTop = y - stick.offsetHeight / 2;
 
-  <h1>Webtendo client</h1>
-
-  <textarea id="input"
-    placeholder="Press Start, enter some text, then press Send."></textarea>
-  <textarea id="output" disabled></textarea>
-
-  <div id="buttons">
-    <button id="sendButton">Send</button>
-  </div>
-  <div id="latency">Connecting...<div>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="scripts/webrtc-adapter/out/adapter.js"></script>
-  <script src="js/main.js"></script>
-
-</body>
+       stick.style.left = newLeft + 'px';
+       stick.style.top = newTop + 'px';
+       // TODO: Tell host what happened.
+     }
+     function handleJoystickTouch(e) {
+       e.preventDefault();
+       // console.log(e);
+       var touches = e.changedTouches;
+       for (var i = 0; i < touches.length; i++) {
+	 // console.log(touches[i]);
+	 moveStick(touches[i].pageX - joystick.offsetLeft, touches[i].pageY - joystick.offsetTop);
+       }
+     }
+     joystick.addEventListener('touchstart', handleJoystickTouch);
+     joystick.addEventListener('touchmove', handleJoystickTouch);
+     joystick.addEventListener('touchend', resetStick);
+     function resetStick() {
+       moveStick(joystick.offsetHeight/2, joystick.offsetWidth/2);
+     }
+     resetStick();
+     
+    </script>
+  </body>
 
 </html>

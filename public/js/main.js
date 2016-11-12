@@ -13,21 +13,18 @@ var configuration = {
 // var configuration = null;
 
 // var roomURL = document.getElementById('url');
-var input = document.getElementById('input');
-var output = document.getElementById('output');
-var sendButton = document.getElementById('sendButton');
 const AUTO_PING = true;
 
 // Attach event handlers
-sendButton.addEventListener('click', () => {
-  console.log('sending ' + input.value);
+function broadcast(message) {
+  console.log('sending ', message);
   for (var dataChannel in dataChannels) {
     dataChannels[dataChannel].send(JSON.stringify({
-      data: input.value,
+      data: message,
       action: 'text',
     }));
   }
-});
+};
 
 // Create a random room if not already present in the URL.
 var isHost = window.location.pathname.includes('host');
@@ -128,14 +125,15 @@ function sendMessage(message, recipient) {
 * WebRTC peer connection and data channel
 ****************************************************************************/
 
+// Map from clientId to RTCPeerConnection. 
+// For clients this will have only the host.
 var peerConns = {};
-// dataChannel.label is the clientId of the recipient.
+// dataChannel.label is the clientId of the recipient. useful in onmessage.
 var dataChannels = {};
 
 function signalingMessageCallback(message) {
   console.log('Client received message:', message);
   var peerConn = peerConns[isHost ? message.sender : clientId];
-  console.log(peerConn);
   // TODO: if got an offer and isHost, ignore?
   if (message.rtcSessionDescription.type === 'offer') {
     console.log('Got offer. Sending answer to peer.');
@@ -239,7 +237,7 @@ function onDataChannelCreated(channel) {
       x.action = 'lag';
       channel.send(JSON.stringify(x));
     } else if (x.action == 'text') {
-      output.value = x.data;
+      console.log(x.data);
     } else if (x.action == 'lag') {
       var str = 'round trip latency ' + (performance.now() - x.time).toFixed(2) + ' ms';
       // console.log(str);
@@ -252,7 +250,7 @@ function onDataChannelCreated(channel) {
 
 
 /****************************************************************************
-* Aux functions, mostly UI-related
+* Aux functions
 ****************************************************************************/
 
 
