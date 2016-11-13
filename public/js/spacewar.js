@@ -4,8 +4,67 @@ var then;
 var ctx;
 var players = {};
 var bullets = [];
-var colors = ['red', 'green', 'blue', 'yellow', 'purple', 'white', 'lightblue', 'pink'];
+var colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'brown', 'black', 'gray'];
 var canvas;
+
+
+class Player {
+  constructor() {
+    this.color = colors.pop();
+    this.theta = Math.random() * Math.PI * 2;
+    this.score = 0;
+    this.speed = 100; // px/second
+    let p = getRandomPosition();
+    this.x = p.x;
+    this.y = p.y;
+  }
+  render(ctx) {
+    const R = 15;
+    // Stroke circle.
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, R,0,2*Math.PI);
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Fill circle.
+    ctx.beginPath();
+    ctx.fillStyle = this.color;
+    ctx.arc(this.x, this.y, R,0,2*Math.PI);
+    ctx.fill();
+    // Triangle
+    ctx.beginPath();
+    ctx.fillStyle = 'black';
+    // TODO: fix these.
+    let h = R*2;
+    ctx.moveTo(this.x + R * Math.cos(this.theta - Math.PI/2), this.y + R * Math.sin(this.theta - Math.PI/2));
+    ctx.lineTo(this.x + h * Math.cos(this.theta), this.y + h * Math.sin(this.theta));
+    ctx.lineTo(this.x + R * Math.cos(this.theta + Math.PI/2), this.y + R * Math.sin(this.theta + Math.PI/2));
+    ctx.stroke();
+  }
+  update() {
+  }
+}
+
+class Bullet {
+  constructor(x, y, vx, vy, owner) {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.owner = owner;
+  }
+  render(ctx) {
+    const R = 5;
+    // Fill circle.
+    ctx.beginPath();
+    ctx.fillStyle = 'red';
+    ctx.arc(this.x, this.y, R,0,2*Math.PI);
+    ctx.fill();
+  }
+  update() {
+  }
+}
+
 
 document.addEventListener("DOMContentLoaded", function(event) {
   canvas = document.getElementById('canvas');
@@ -24,6 +83,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 // Update positions.
 function update(modifier) {
+  // TODO: move this logic into the objects.
   for (var i = bullets.length - 1; i >= 0; i--) {
     let bullet = bullets[i];
     bullet.x += bullet.vx * 300 * modifier;
@@ -43,15 +103,15 @@ function update(modifier) {
     }
     if (player.b) {
       // Fire weapon.
-      bullets.push({
-        x: player.x + Math.cos(player.theta) * 40,
-        y: player.y + Math.sin(player.theta) * 40,
+      bullets.push(new Bullet(
+        player.x + Math.cos(player.theta) * 40,
+        player.y + Math.sin(player.theta) * 40,
         // Force velocity to sum to 1.
-        vx: Math.cos(player.theta),
-        vy: Math.sin(player.theta),
+        Math.cos(player.theta),
+        Math.sin(player.theta),
         // Who to give points for a kill.
-        owner: id,
-      });
+        id
+      ));
       // Consume touch so we only fire 1 bullet per press.
       delete player.b;
     }
@@ -93,41 +153,9 @@ var render = function () {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // TODO: make classes for players and bullets and just call their render methods.
-  bullets.forEach(bullet => {
-    const R = 5;
-    // Fill circle.
-    ctx.beginPath();
-    ctx.fillStyle = 'red';
-    ctx.arc(bullet.x, bullet.y, R,0,2*Math.PI);
-    ctx.fill();
-  });
+  bullets.forEach(bullet => bullet.render(ctx));
   for (let id in players) {
-    let player = players[id];
-    const R = 15;
-    // Stroke circle.
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, R,0,2*Math.PI);
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    // Fill circle.
-    ctx.beginPath();
-    ctx.fillStyle = player.color;
-    ctx.arc(player.x, player.y, R,0,2*Math.PI);
-    ctx.fill();
-    // Triangle
-    ctx.beginPath();
-    ctx.fillStyle = 'black';
-    // TODO: fix these.
-    let h = R*2;
-    ctx.moveTo(player.x + R * Math.cos(player.theta - Math.PI/2), player.y + R * Math.sin(player.theta - Math.PI/2));
-    ctx.lineTo(player.x + h * Math.cos(player.theta), player.y + h * Math.sin(player.theta));
-    ctx.lineTo(player.x + R * Math.cos(player.theta + Math.PI/2), player.y + R * Math.sin(player.theta + Math.PI/2));
-    ctx.stroke();
-    // Rectangles.
-    // ctx.fillRect(player.x, player.y, 30, 30);
-    // ctx.strokeRect(player.x,player.y, 30,30);
-    // ctx.drawImage(heroImage, hero.x, hero.y);
+    players[id].render(ctx);
   }
 
   // Scoreboard
@@ -154,12 +182,7 @@ onConnected = function(id) {
   console.log(id, 'connected');
   sendToClient(id, {hello: 'client'});
   if (!players[id]) {
-    players[id] = {
-      color: colors.pop(),
-      score: 0,
-      theta: Math.random() * Math.PI * 2,
-      speed: 100, // px/second
-    };
-    Object.assign(players[id], getRandomPosition());
+    players[id] = new Player();
   }
 }
+
