@@ -60,43 +60,32 @@
          y: - Math.sin(theta),
        };
      }
-     function handleJoystickTouch(e) {
-       e.preventDefault();
-       // console.log(e);
-       var touches = e.changedTouches;
-       for (var i = 0; i < touches.length; i++) {
-         // Any touches elsewhere while a finger is down on the joystick will
-         // block input on the rest of the screen.
-         let region = getRegion(touches[i].pageX, touches[i].pageY);
-         // In joystick part of screen.
-         if (region === 'stick') {
-           let position = {x: 0, y: 0};
-           if (e.type === 'touchend') {
-             resetStick();
-           } else {
-             position = moveStick(touches[i].pageX - joystick.offsetLeft, touches[i].pageY - joystick.offsetTop);
-           }
+
+     onTouch = function(e, region) {
+       // In joystick part of screen.
+       if (region === 'stick') {
+         let position = {x: 0, y: 0};
+         if (e.type === 'touchend') {
+           resetStick();
+         } else {
+           position = moveStick(touches[i].pageX - joystick.offsetLeft, touches[i].pageY - joystick.offsetTop);
+         }
+         sendToHost({
+           action: e.type,
+           value: region,
+           position: position,
+         });
+       } else {
+         // In button part of screen. Ignore moves.
+         // TODO: fix highlighting.
+         if (e.type !== 'touchmove') {
            sendToHost({
              action: e.type,
              value: region,
-             position: position,
            });
-         } else {
-           // In button part of screen. Ignore moves.
-           // TODO: fix highlighting.
-           if (e.type !== 'touchmove') {
-             sendToHost({
-               action: e.type,
-               value: region,
-             });
-           }
          }
        }
-       // return true;
      }
-     document.body.addEventListener('touchstart', handleJoystickTouch);
-     document.body.addEventListener('touchmove', handleJoystickTouch);
-     document.body.addEventListener('touchend', handleJoystickTouch);
      function resetStick() {
        moveStick(joystick.offsetHeight/2, joystick.offsetWidth/2);
      }
