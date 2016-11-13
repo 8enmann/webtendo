@@ -20,9 +20,15 @@
   <script src="scripts/webrtc-adapter/out/adapter.js"></script>
   <script src="js/main.js"></script>
   <script>
-   onClientMessage = function(x) {
+   onMessageReceived = function(x) {
+     // TODO: do something with message from client.
      console.log(x);
    }
+   onConnected = function(id) {
+     console.log(id, 'connected');
+     sendToClient(id, {hello: 'client'});
+   }
+
   </script>
 </body>
 

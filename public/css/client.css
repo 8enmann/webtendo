@@ -12,6 +12,14 @@ body {
 
 }
 
+.fullscreen {
+  position:absolute;
+  top:0;
+  width: 3em;
+  background-color:white;
+  margin: 4px;
+}
+
 button {
     background: none;
     border: 0;
@@ -78,7 +86,14 @@ button:active {
 }
 
 .ctrl-left {
-    display: flex;
-    flex: 1;
-    justify-content: center;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+}
+
+#latency {
+  position: absolute;
+  bottom: 0;
+  margin: 10px;
+  opacity: .5;
 }

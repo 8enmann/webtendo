@@ -1,45 +1,59 @@
 'use strict';
 
 /****************************************************************************
+* Public interface
+****************************************************************************/
+
+// Called when a message is received. Host can check message.clientId for sender.
+var onMessageReceived;
+// Called when a data channel opens, passing clientId as argument.
+var onConnected;
+// Am I the host?
+var isHost;
+// My ID.
+var clientId;
+// Send a message to a particular client.
+function sendToClient(recipientId, obj) {
+  return dataChannels[recipientId].send(JSON.stringify(obj));
+}
+// Send a message to all clients.
+function broadcast(obj) {
+  return getClients().map(client => sendToClient(client, obj));
+}
+// Get a list of all the clients connected.
+function getClients() {
+  return Object.keys(dataChannels);
+}
+// Measure latency at 1Hz.
+const AUTO_PING = false;
+const VERBOSE = false;
+
+/****************************************************************************
 * Initial setup
 ****************************************************************************/
 
 var configuration = {
   'iceServers': [
     {'url': 'stun:stun.l.google.com:19302'},
-    {'url':'stun:stun.services.mozilla.com'}
+    {'url':'stun:stun.services.mozilla.com'},
   ]
 };
-// var configuration = null;
-
-// var roomURL = document.getElementById('url');
-const AUTO_PING = true;
 
 // Attach event handlers
-function broadcast(message) {
-  console.log('sending ', message);
-  for (var dataChannel in dataChannels) {
-    dataChannels[dataChannel].send(JSON.stringify({
-      data: message,
-      action: 'text',
-    }));
-  }
-};
 
-var onClientMessage;
 // Create a random room if not already present in the URL.
-var isHost = window.location.pathname.includes('host');
+isHost = window.location.pathname.includes('host');
 // TODO: get room from server based on external IP, then store in window.location.hash
 var room = 'foo';
 // Use session storage to maintain connections across refresh but allow
 // multiple tabs in the same browser for testing purposes.
 // Not to be confused with socket ID.
-var clientId = sessionStorage.getItem('clientId');
+clientId = sessionStorage.getItem('clientId');
 if (!clientId) {
   clientId = Math.random().toString(36).substr(2, 10);
   sessionStorage.setItem('clientId', clientId);
 }
-console.log('Session clientId ' + clientId);
+maybeLog()('Session clientId ' + clientId);
 
 /****************************************************************************
 * Signaling server
@@ -49,8 +63,7 @@ console.log('Session clientId ' + clientId);
 var socket = io.connect();
 
 socket.on('ipaddr', function(ipaddr) {
-  console.log('Server IP address is: ' + ipaddr);
-  // TODO: actually should display host IP not server
+  maybeLog()('Server IP address is: ' + ipaddr);
   if (isHost) {
     document.getElementById('ip').innerText = 'Clients connect to ' + ipaddr;
   }
@@ -58,7 +71,7 @@ socket.on('ipaddr', function(ipaddr) {
 });
 
 socket.on('created', function(room, hostClientId) {
-  console.log('Created room', room, '- my client ID is', clientId);
+  maybeLog()('Created room', room, '- my client ID is', clientId);
   if (!isHost) {
     // Get dangling clients to reconnect if a host stutters.
     peerConns = {};
@@ -71,12 +84,12 @@ socket.on('full', function(room) {
   //alert('Room ' + room + ' is full. We will create a new room for you.');
   //window.location.hash = '';
   //window.location.reload();
-  console.log('server thinks room is full');
+  maybeLog()('server thinks room is full');
   // TODO: remove this
 });
 
 socket.on('joined', function(room, clientId) {
-  console.log(clientId, 'joined');
+  maybeLog()(clientId, 'joined');
   createPeerConnection(isHost, configuration, clientId);
 });
 
@@ -104,7 +117,7 @@ function sendMessage(message, recipient) {
     sender: clientId,
     rtcSessionDescription: message,
   };
-  console.log('Client sending message: ', payload);
+  maybeLog()('Client sending message: ', payload);
   socket.emit('message', room, payload);
 }
 
@@ -133,17 +146,17 @@ var peerConns = {};
 var dataChannels = {};
 
 function signalingMessageCallback(message) {
-  console.log('Client received message:', message);
+  maybeLog()('Client received message:', message);
   var peerConn = peerConns[isHost ? message.sender : clientId];
   // TODO: if got an offer and isHost, ignore?
   if (message.rtcSessionDescription.type === 'offer') {
-    console.log('Got offer. Sending answer to peer.');
+    maybeLog()('Got offer. Sending answer to peer.');
     peerConn.setRemoteDescription(new RTCSessionDescription(message.rtcSessionDescription), function() {},
                                   logError);
     peerConn.createAnswer(onLocalSessionCreated(message.sender), logError);
 
   } else if (message.rtcSessionDescription.type === 'answer') {
-    console.log('Got answer.');
+    maybeLog()('Got answer.');
     peerConn.setRemoteDescription(new RTCSessionDescription(message.rtcSessionDescription), function() {},
                                   logError);
 
@@ -162,13 +175,13 @@ function signalingMessageCallback(message) {
 // isHost: Am I the initiator?
 // config: for RTCPeerConnection, contains STUN/TURN servers.
 function createPeerConnection(isHost, config, recipientClientId) {
-  console.log('Creating Peer connection. isHost?', isHost, 'recipient', recipientClientId, 'config:',
+  maybeLog()('Creating Peer connection. isHost?', isHost, 'recipient', recipientClientId, 'config:',
               config);
   peerConns[recipientClientId] = new RTCPeerConnection(config);
 
   // send any ice candidates to the other peer
   peerConns[recipientClientId].onicecandidate = function(event) {
-    console.log('icecandidate event:', event);
+    maybeLog()('icecandidate event:', event);
     if (event.candidate) {
       sendMessage({
 	type: 'candidate',
@@ -177,20 +190,20 @@ function createPeerConnection(isHost, config, recipientClientId) {
 	candidate: event.candidate.candidate
       }, recipientClientId);
     } else {
-      console.log('End of candidates.');
+      maybeLog()('End of candidates.');
     }
   };
 
   if (isHost) {
-    console.log('Creating Data Channel');
+    maybeLog()('Creating Data Channel');
     dataChannels[recipientClientId] = peerConns[recipientClientId].createDataChannel(recipientClientId);
     onDataChannelCreated(dataChannels[recipientClientId]);
 
-    console.log('Creating an offer');
+    maybeLog()('Creating an offer');
     peerConns[recipientClientId].createOffer(onLocalSessionCreated(recipientClientId), logError);
   } else {
     peerConns[recipientClientId].ondatachannel = (event) => {
-      console.log('ondatachannel:', event.channel);
+      maybeLog()('ondatachannel:', event.channel);
       dataChannels[recipientClientId] = event.channel;
       onDataChannelCreated(dataChannels[recipientClientId]);
     };
@@ -200,19 +213,21 @@ function createPeerConnection(isHost, config, recipientClientId) {
 function onLocalSessionCreated(recipientClientId) {
   return (desc) => {
     var peerConn = peerConns[isHost ? recipientClientId : clientId];
-    console.log('local session created:', desc);
+    maybeLog()('local session created:', desc);
     peerConn.setLocalDescription(desc, () => {
-      console.log('sending local desc:', peerConn.localDescription);
+      maybeLog()('sending local desc:', peerConn.localDescription);
       sendMessage(peerConn.localDescription, recipientClientId);
     }, logError);
   };
 }
 
 function onDataChannelCreated(channel) {
-  console.log('onDataChannelCreated:', channel);
+  maybeLog()('onDataChannelCreated:', channel);
 
   channel.onopen = () => {
-    console.log('Data channel opened to ' + channel.label);
+    if (onConnected) {
+      onConnected(channel.label);
+    }
     if (AUTO_PING) {
       // As long as the channel is open, send a message 1/sec to
       // measure latency and verify everything works
@@ -228,26 +243,28 @@ function onDataChannelCreated(channel) {
 	  window.clearInterval(cancel);
 	}
       }, 1000);
+    } else {
+      document.getElementById('latency').innerText = 'Connected';
     }
   };
 
   channel.onmessage = (event) => {
-    // console.log(event);
+    // maybeLog()(event);
     var x = JSON.parse(event.data);
     if (x.action === 'echo') {
       x.action = 'lag';
       channel.send(JSON.stringify(x));
     } else if (x.action == 'text') {
-      console.log(x.data);
+      maybeLog()(x.data);
     } else if (x.action == 'lag') {
       var str = 'round trip latency ' + (performance.now() - x.time).toFixed(2) + ' ms';
-      // console.log(str);
+      // maybeLog()(str);
       document.getElementById('latency').innerText = str;
-    } else if (onClientMessage) {
+    } else if (onMessageReceived) {
       x.clientId = channel.label;
-      onClientMessage(x);
+      onMessageReceived(x);
     } else {
-      console.log('unknown action');
+      maybeLog()('unknown action');
     }
   };
 }
@@ -264,4 +281,11 @@ function randomToken() {
 
 function logError(err) {
   console.log(err.toString(), err);
+}
+
+function maybeLog() {
+  if (VERBOSE) {
+    return console.log;
+  }
+  return function(){};
 }

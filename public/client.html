@@ -8,14 +8,6 @@
     <link rel="stylesheet" href="/css/main.css" />
     <link rel="stylesheet" href="/css/client.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <style>
-     #latency {
-       position: absolute;
-       bottom: 0;
-       margin: 10px;
-       opacity: .5;
-     }
-    </style>
   </head>
   <body>
     <div class="ctrl-left touch-region" data-buttonvalue="stick">
@@ -28,34 +20,25 @@
       <button data-buttonvalue="b" class="b touch-region">B</button>
     </div>
     <div id="latency">Connecting...</div>
+    <img id="fullscreen" class="fullscreen" src="data:image/svg+xml;utf8;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTkuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeD0iMHB4IiB5PSIwcHgiIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA1MTIgNTEyOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgd2lkdGg9IjEyOHB4IiBoZWlnaHQ9IjEyOHB4Ij4KPGc+Cgk8Zz4KCQk8cGF0aCBkPSJNMCwwdjUxMmg1MTJWMEgweiBNMTk1LjA0OCw0MjAuNTcxdjM2LjU3MUg1NC44NTd2LTE0MC4xOWgzNi41NzF2NzcuNzYybDEwMi44OC0xMDIuODhsMjUuODYsMjUuODZMMTE3LjI5MSw0MjAuNTcxICAgIEgxOTUuMDQ4eiBNMTk0LjMwOSwyMjAuMTdMOTEuNDI5LDExNy4yOTF2NzcuNzU3SDU0Ljg1N1Y1NC44NTdoMTQwLjE5djM2LjU3MWgtNzcuNzYyTDIyMC4xNjksMTk0LjMxTDE5NC4zMDksMjIwLjE3eiAgICAgTTQ1Ny4xNDMsNDU3LjE0M2gtMTQwLjE5di0zNi41NzFoNzcuNzU3bC0xMDIuODc4LTEwMi44OGwyNS44Ni0yNS44NmwxMDIuODgsMTAyLjg4M3YtNzcuNzYyaDM2LjU3MVY0NTcuMTQzeiBNNDU3LjE0MywxOTUuMDQ4ICAgIGgtMzYuNTcxdi03Ny43NTdsLTEwMi44OCwxMDIuODhsLTI1Ljg2LTI1Ljg2TDM5NC43MTQsOTEuNDI5aC03Ny43NjJWNTQuODU3aDE0MC4xOVYxOTUuMDQ4eiIgZmlsbD0iIzAwMDAwMCIvPgoJPC9nPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+Cjwvc3ZnPgo=" />
     <script src="/socket.io/socket.io.js"></script>
     <script src="scripts/webrtc-adapter/out/adapter.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/client.js"></script>
     <script>
-     // Disable zoom on iOS 10.
-     document.addEventListener('gesturestart', function (e) {
-       e.preventDefault();
-     });
+     onMessageReceived = function(x) {
+       // TODO: do something with message from host.
+       console.log(x);
+     }
+     onConnected = function(id) {
+       console.log(id, 'connected');
+       sendToHost({hello: 'host'});
+     }
 
      // This can only be called in an onclick handler
      // TODO: stick this inside a dedicated button.
      var joystick = document.getElementById('joystick');
      var stick = document.getElementById('stick');
-     // TODO: replace this with sindresorhus/screenfull.js
-     joystick.addEventListener('touchstart', fullscreen);
-     function fullscreen(e) {
-       document.documentElement.webkitRequestFullScreen();
-       joystick.removeEventListener('touchstart', fullscreen);
-       if (!screen.orientation.type.includes('landscape')) {
-	 screen.orientation.lock('landscape')
-	       .then(()=> console.log('switched to landscape'),
-		     err => {
-		       console.error(err);
-		       window.alert('please rotate device');
-		     });
-       }
-
-     }
      function moveStick(x,y) {
        let radius = joystick.offsetWidth/2;
        // Check to see if the point is out of bounds and if so, clip.
@@ -79,15 +62,6 @@
 	 y: - Math.sin(theta),
        };
      }
-     let regions = document.getElementsByClassName('touch-region');
-     function getRegion(x, y) {
-       let check = (x, left, width) => x >= left && x <= left + width;
-       for (let region of regions) {
-	 if (check(x, region.offsetLeft, region.offsetWidth) && check(y, region.offsetTop, region.offsetHeight)) {
-	   return region.dataset.buttonvalue;
-	 }
-       }
-     }
      function handleJoystickTouch(e) {
        e.preventDefault();
        // console.log(e);
@@ -104,19 +78,19 @@
 	   } else {
 	     position = moveStick(touches[i].pageX - joystick.offsetLeft, touches[i].pageY - joystick.offsetTop);
 	   }
-	   dataChannels[clientId].send(JSON.stringify({
+	   sendToHost({
 	     action: e.type,
 	     value: region,
 	     position: position,
-	   }));
+	   });
 	 } else {
 	   // In button part of screen. Ignore moves.
 	   // TODO: fix highlighting.
 	   if (e.type !== 'touchmove') {
-	     dataChannels[clientId].send(JSON.stringify({
+	     sendToHost({
 	       action: e.type,
 	       value: region,
-	     }));
+	     });
 	   }
 	 }
        }
@@ -133,5 +107,4 @@
      
     </script>
   </body>
-
 </html>
