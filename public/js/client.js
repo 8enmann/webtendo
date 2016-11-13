@@ -28,13 +28,13 @@ function getRegion(x, y) {
 function handleTouch(e) {
   e.preventDefault();
   // console.log(e);
-  var touches = e.changedTouches;
+  let touches = e.changedTouches;
   for (var i = 0; i < touches.length; i++) {
     // Any touches elsewhere while a finger is down on the joystick will
     // block input on the rest of the screen.
     let region = getRegion(touches[i].pageX, touches[i].pageY);
     if (onTouch) {
-      onTouch(e, region);
+      onTouch(e, touches[i], region);
     }
     // return true;
   }

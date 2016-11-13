@@ -61,14 +61,14 @@
        };
      }
 
-     onTouch = function(e, region) {
+     onTouch = function(e, touch, region) {
        // In joystick part of screen.
        if (region === 'stick') {
          let position = {x: 0, y: 0};
          if (e.type === 'touchend') {
            resetStick();
          } else {
-           position = moveStick(touches[i].pageX - joystick.offsetLeft, touches[i].pageY - joystick.offsetTop);
+           position = moveStick(touch.pageX - joystick.offsetLeft, touch.pageY - joystick.offsetTop);
          }
          sendToHost({
            action: e.type,
