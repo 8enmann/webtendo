@@ -10,11 +10,11 @@ function fullscreen(e) {
   document.documentElement.webkitRequestFullScreen();
   if (!screen.orientation.type.includes('landscape')) {
     screen.orientation.lock('landscape')
-	  .then(()=> console.log('switched to landscape'),
-		err => {
-		  console.error(err);
-		  window.alert('please rotate device');
-		});
+          .then(()=> console.log('switched to landscape'),
+                err => {
+                  console.error(err);
+                  window.alert('please rotate device');
+                });
   }
 
 }

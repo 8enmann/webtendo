@@ -1,8 +1,8 @@
 'use strict';
 
 /****************************************************************************
-* Public interface
-****************************************************************************/
+ * Public interface
+ ****************************************************************************/
 
 // Called when a message is received. Host can check message.clientId for sender.
 var onMessageReceived;
@@ -29,8 +29,8 @@ const AUTO_PING = false;
 const VERBOSE = false;
 
 /****************************************************************************
-* Initial setup
-****************************************************************************/
+ * Initial setup
+ ****************************************************************************/
 
 var configuration = {
   'iceServers': [
@@ -56,8 +56,8 @@ if (!clientId) {
 maybeLog()('Session clientId ' + clientId);
 
 /****************************************************************************
-* Signaling server
-****************************************************************************/
+ * Signaling server
+ ****************************************************************************/
 
 // Connect to the signaling server
 var socket = io.connect();
@@ -109,8 +109,8 @@ if (location.hostname.match(/localhost|127\.0\.0/)) {
 }
 
 /**
-* Send message to signaling server
-*/
+ * Send message to signaling server
+ */
 function sendMessage(message, recipient) {
   var payload = {
     recipient: recipient,
@@ -122,8 +122,8 @@ function sendMessage(message, recipient) {
 }
 
 /**
-* Updates URL on the page so that users can copy&paste it to their peers.
-*/
+ * Updates URL on the page so that users can copy&paste it to their peers.
+ */
 // function updateRoomURL(ipaddr) {
 //   var url;
 //   if (!ipaddr) {
@@ -136,8 +136,8 @@ function sendMessage(message, recipient) {
 
 
 /****************************************************************************
-* WebRTC peer connection and data channel
-****************************************************************************/
+ * WebRTC peer connection and data channel
+ ****************************************************************************/
 
 // Map from clientId to RTCPeerConnection. 
 // For clients this will have only the host.
@@ -176,7 +176,7 @@ function signalingMessageCallback(message) {
 // config: for RTCPeerConnection, contains STUN/TURN servers.
 function createPeerConnection(isHost, config, recipientClientId) {
   maybeLog()('Creating Peer connection. isHost?', isHost, 'recipient', recipientClientId, 'config:',
-              config);
+             config);
   peerConns[recipientClientId] = new RTCPeerConnection(config);
 
   // send any ice candidates to the other peer
@@ -184,10 +184,10 @@ function createPeerConnection(isHost, config, recipientClientId) {
     maybeLog()('icecandidate event:', event);
     if (event.candidate) {
       sendMessage({
-	type: 'candidate',
-	label: event.candidate.sdpMLineIndex,
-	id: event.candidate.sdpMid,
-	candidate: event.candidate.candidate
+        type: 'candidate',
+        label: event.candidate.sdpMLineIndex,
+        id: event.candidate.sdpMid,
+        candidate: event.candidate.candidate
       }, recipientClientId);
     } else {
       maybeLog()('End of candidates.');
@@ -232,16 +232,16 @@ function onDataChannelCreated(channel) {
       // As long as the channel is open, send a message 1/sec to
       // measure latency and verify everything works
       var cancel = window.setInterval(() => {
-	try {
-	  channel.send(JSON.stringify({
-	    action: 'echo',
-	    time: performance.now(),
-	  }));
-	} catch (e) {
-	  console.error(e);
-	  
-	  window.clearInterval(cancel);
-	}
+        try {
+          channel.send(JSON.stringify({
+            action: 'echo',
+            time: performance.now(),
+          }));
+        } catch (e) {
+          console.error(e);
+          
+          window.clearInterval(cancel);
+        }
       }, 1000);
     } else {
       document.getElementById('latency').innerText = 'Connected';
@@ -271,8 +271,8 @@ function onDataChannelCreated(channel) {
 
 
 /****************************************************************************
-* Aux functions
-****************************************************************************/
+ * Aux functions
+ ****************************************************************************/
 
 
 function randomToken() {
