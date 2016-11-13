@@ -39,13 +39,16 @@
      var stick = document.getElementById('stick');
      function moveStick(x,y) {
        let radius = joystick.offsetWidth/2;
+       let relativeX = x - radius;
+       let relativeY = y - radius;
        // Check to see if the point is out of bounds and if so, clip.
-       let distance = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
-       let theta = Math.atan2((y - radius), (x - radius));
-       if (distance > (radius - stick.offsetWidth/2)) {
+       let distance = Math.sqrt(Math.pow(relativeX, 2) + Math.pow(relativeY, 2));
+       let theta = Math.atan2(relativeY, relativeX);
+       let maxDistance = radius - stick.offsetWidth/2;
+       if (distance > maxDistance) {
          stick.style.backgroundColor = 'red';
-         x = (radius - stick.offsetWidth/2) * Math.cos(theta) + radius;
-         y = (radius - stick.offsetWidth/2) * Math.sin(theta) + radius;
+         x = maxDistance * Math.cos(theta) + radius;
+         y = maxDistance * Math.sin(theta) + radius;
        } else {
          stick.style.backgroundColor = 'white';
        }
@@ -56,8 +59,8 @@
        stick.style.left = newLeft + 'px';
        stick.style.top = newTop + 'px';
        return {
-         x: Math.cos(theta),
-         y: - Math.sin(theta),
+         x: Math.max(-maxDistance, Math.min(maxDistance, relativeX + Math.sign(relativeX) * stick.offsetWidth / 2)) / maxDistance,
+         y: Math.max(-maxDistance, Math.min(maxDistance, relativeY + Math.sign(relativeY) * stick.offsetWidth / 2)) / maxDistance,
        };
      }
 
