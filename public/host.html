@@ -6,6 +6,7 @@
   <title>Webtendo</title>
 
   <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/host.css" />
 
 </head>
 
@@ -15,21 +16,12 @@
 
   <div id="ip"></div>
   <div id="latency"></div>
-
+  <canvas id="canvas"></canvas>
+  
   <script src="/socket.io/socket.io.js"></script>
   <script src="scripts/webrtc-adapter/out/adapter.js"></script>
   <script src="js/main.js"></script>
-  <script>
-   onMessageReceived = function(x) {
-     // TODO: do something with message from client.
-     console.log(x);
-   }
-   onConnected = function(id) {
-     console.log(id, 'connected');
-     sendToClient(id, {hello: 'client'});
-   }
-
-  </script>
+  <script src="js/spacewar.js"></script>
 </body>
 
 </html>
