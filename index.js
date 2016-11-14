@@ -12,7 +12,7 @@ depLinker.linkDependenciesTo('./public/scripts')
 var file = new nodeStatic.Server('./public');
 var app = http.createServer(function(req, res) {
   file.serve(req, res);
-}).listen(8080);
+}).listen(process.env.PORT || 8080);
 
 var hosts = {};
 var clients = {};
