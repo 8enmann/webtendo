@@ -10,5 +10,8 @@
   },
   "scripts": {
     "start": "node index.js"
+  },
+  "engines": {
+    "node": "6.6.0"
   }
 }
