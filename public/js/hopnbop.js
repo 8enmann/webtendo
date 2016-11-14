@@ -32,7 +32,7 @@ canvas.height = MAP_CONFIG.TILE_WIDTH * MAP_CONFIG.N_TILES_HIGH;
 const map1 = {
   tileTypes: [
     {color: '#eee', isSolid: false},
-    {color: '#aba', isSolid: true}
+    {color: '#999', isSolid: true}
   ],
   data: [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -71,6 +71,10 @@ function PlatformerEngine() {
 
 PlatformerEngine.prototype.loadMap = function(map) {
   this.map = map;
+
+  this.players.forEach(player => {
+    this.respawnPlayer(player);
+  });
 };
 
 /**
@@ -276,26 +280,6 @@ PlatformerEngine.prototype.movePlayers = function() {
     
     // this.last_tile = tile.id;
   });
-
-
-  let getRespawnableLocation = () => {
-
-    let col = Math.floor(Math.random() * MAP_CONFIG.N_TILES_WIDE);
-    let row = Math.floor(Math.random() * MAP_CONFIG.N_TILES_HIGH);
-
-    let x = MAP_CONFIG.TILE_WIDTH * col;
-    let y = MAP_CONFIG.TILE_WIDTH * row;
-
-    let tile = this.getTile(
-        col,
-        row
-    );
-     
-    if (tile.isSolid) {
-      return getRespawnableLocation();
-    }
-    return {x, y};
-  };
   
   // TODO don't make it n^2
   this.players.forEach(player => {
@@ -315,14 +299,33 @@ PlatformerEngine.prototype.movePlayers = function() {
         let bounce = MAP_CONFIG.KILL_BOUNCE;
         
         player.velocity.y = -bounce;
-
-        let respawnLocation = getRespawnableLocation();
-        opponent.respawn(respawnLocation);
         player.addKillTally(opponent);
+        this.respawnPlayer(opponent);
       }
 
     });
   });
+};
+
+PlatformerEngine.prototype.respawnPlayer = function(player) {
+  let getRespawnableLocation = () => {
+
+    let x = MAP_CONFIG.TILE_WIDTH + (Math.random() * (canvas.width - (3 * MAP_CONFIG.TILE_WIDTH)));
+    let y = MAP_CONFIG.TILE_WIDTH + (Math.random() * (canvas.height - (3 * MAP_CONFIG.TILE_WIDTH)));
+
+    let tile = this.getTile(
+        Math.round(x / MAP_CONFIG.TILE_WIDTH),
+        Math.round(y / MAP_CONFIG.TILE_WIDTH)
+    );
+     
+    if (tile.isSolid) {
+      return getRespawnableLocation();
+    }
+    return {x, y};
+  };
+
+  let respawnLocation = getRespawnableLocation();
+  player.respawn(respawnLocation);
 };
 
 /**
@@ -346,18 +349,20 @@ PlatformerEngine.prototype.onConnected = function(id) {
   console.log(id, 'connected');
   window.sendToClient(id, {hello: 'client'});
 
-  const COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'brown', 'black', 'gray'];
+  const COLORS = ['red', 'orange', 'green', 'blue', 'purple', 'brown', 'black', 'gray'];
 
   if (!this.players.has(id)) {
     let playerColor = COLORS[this.players.size];
-    this.players.set(id, new Bunny(playerColor));
+    let player = new Bunny(playerColor);
+    this.players.set(id, player);
+    this.respawnPlayer(player);
   }
 };
 
 PlatformerEngine.prototype.draw = function(context) {
   this.drawMap(context);
   this.drawPlayers(context);
-  // this.drawScore();
+  this.drawScore(context);
 };
 
 PlatformerEngine.prototype.drawMap = function(context) {
@@ -380,18 +385,38 @@ PlatformerEngine.prototype.drawPlayers = function(context) {
   });
 };
 
-PlatformerEngine.prototype.drawScore = function() {
-  let players = document.getElementById('players');
-  while (players.hasChildNodes()) {
-      players.removeChild(players.lastChild);
-  }
+PlatformerEngine.prototype.drawScore = function(context) {
+
+  let locationCursor = {
+    x: MAP_CONFIG.TILE_WIDTH ,
+    y: MAP_CONFIG.TILE_WIDTH / 2,
+  };
 
   this.players.forEach(player => {
-    let playerLi = document.createElement('li');
-    playerLi.className = 'player';
-    let scoreText = document.createTextNode(`${player.color}: ${player.killCount}`); 
-    playerLi.appendChild(scoreText);
-    players.appendChild(playerLi);
+    // draw player dot
+    locationCursor.y = MAP_CONFIG.TILE_WIDTH / 2;
+
+    context.fillStyle = player.color;
+    context.beginPath();
+    context.arc(
+        locationCursor.x + MAP_CONFIG.TILE_WIDTH / 2,
+        locationCursor.y,
+        3 * MAP_CONFIG.TILE_WIDTH / 8 - 1,
+        0,
+        Math.PI * 2
+    );
+    context.fill();
+    locationCursor.x += MAP_CONFIG.TILE_WIDTH;
+
+    // draw score number
+    locationCursor.y = 3 * MAP_CONFIG.TILE_WIDTH / 4;
+
+    context.fillStyle = 'white';
+    context.font = `${3 * MAP_CONFIG.TILE_WIDTH / 4}px sans-serif`;
+    context.fillText(`${player.killCount}`, locationCursor.x, locationCursor.y);
+   
+    locationCursor.x += context.measureText(`${player.killCount}`).width;
+    locationCursor.x += MAP_CONFIG.TILE_WIDTH;
   });
 };
 
