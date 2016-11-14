@@ -11,17 +11,23 @@
 </head>
 
 <body>
+  <header class="header">
+    <h1 class="title">Webtendo host</h1>
 
-  <h1>Webtendo host</h1>
+    <div class="meta">
+      <div id="ip"></div>
+      <div id="latency"></div>
+    </div>
+  </header>
 
-  <div id="ip"></div>
-  <div id="latency"></div>
-  <canvas id="canvas"></canvas>
-  
+  <div class="game">
+    <canvas id="canvas"></canvas>
+  </div>
+    
   <script src="/socket.io/socket.io.js"></script>
   <script src="scripts/webrtc-adapter/out/adapter.js"></script>
   <script src="js/main.js"></script>
-  <script src="js/spacewar.js"></script>
+  <script src="js/hopnbop.js"></script>
 </body>
 
 </html>
