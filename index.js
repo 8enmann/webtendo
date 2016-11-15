@@ -18,6 +18,9 @@ var hosts = {};
 var clients = {};
 var io = socketIO.listen(app);
 io.sockets.on('connection', function(socket) {
+  var socketClientId;
+  var hostId;
+  var socketRoom;
 
   // convenience function to log server messages on the client
   function log() {
@@ -40,8 +43,8 @@ io.sockets.on('connection', function(socket) {
   socket.on('create or join', function(room, clientId, isHost) {
     log('create or join room ' + room + ' from ' + clientId + ' ' + socket.handshake.address + '//' + socket.request.connection.remoteAddress);
     clients[clientId] = socket.id;
-
-    console.log(isHost);
+    socketClientId = clientId;
+    socketRoom = room;
     if (isHost) {
       socket.join(room);
       hosts[room] = clientId;
@@ -56,15 +59,24 @@ io.sockets.on('connection', function(socket) {
     log('Room ' + room + ' now has ' + numClients + ' client(s)');
     if (numClients < 10) {
       log('Client ID ' + socket.id + ' joined room ' + room);
+      hostId = hosts[room];
       socket.join(room);
       // Tell host to send an offer.
-      io.to(clients[hosts[room]]).emit('joined', room, clientId);
+      io.to(clients[hostId]).emit('joined', room, clientId);
       // Echo back to sender so they know they joined successfully.
       socket.emit('joined', room, clientId);
     } else { // max two clients
       socket.emit('full', room);
     }
   });
+  socket.on('disconnect', () => {
+    if (!socketClientId) {
+      return;
+    }
+    console.log(socketClientId, 'disconnected from', socketRoom);
+    io.to(clients[hostId]).emit('disconnected', socketRoom, socketClientId);
+  });
+
 
   socket.on('ipaddr', function() {
     var ifaces = os.networkInterfaces();
@@ -80,5 +92,4 @@ io.sockets.on('connection', function(socket) {
   socket.on('bye', function(){
     console.log('received bye');
   });
-
 });

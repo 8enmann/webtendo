@@ -8,6 +8,8 @@
 var onMessageReceived;
 // Called when a data channel opens, passing clientId as argument.
 var onConnected;
+// Called when a data channel closes, passing clientId as argument.
+var onDisconnected;
 // Am I the host?
 var isHost;
 // My ID.
@@ -95,6 +97,12 @@ socket.on('joined', function(room, clientId) {
 
 socket.on('log', function(array) {
   console.log.apply(console, array);
+});
+
+socket.on('disconnected', (room, clientId) => {
+  if (onDisconnected) {
+    onDisconnected(clientId);
+  }
 });
 
 socket.on('message', signalingMessageCallback);
@@ -224,6 +232,11 @@ function onLocalSessionCreated(recipientClientId) {
 function onDataChannelCreated(channel) {
   maybeLog()('onDataChannelCreated:', channel);
 
+  channel.onclose = () => {
+    if (onDisconnected) {
+      onDisconnected(channel.label);
+    }
+  };
   channel.onopen = () => {
     if (onConnected) {
       onConnected(channel.label);

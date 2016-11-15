@@ -287,6 +287,11 @@ onConnected = function(id) {
   }
 };
 
+onDisconnected = function(id) {
+  console.log(id, 'disconnected');
+  delete players[id];
+};
+
 function sectionForCoordinate(x, y) {
   x = Math.max(0, Math.min(x, canvas.offsetWidth - 1));
   y = Math.max(0, Math.min(y, canvas.offsetHeight - 1));
