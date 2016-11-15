@@ -9,7 +9,6 @@ body {
   height: 100vh;
   width: 100vw;
   align-items: center;
-
 }
 
 .fullscreen {
@@ -35,6 +34,28 @@ button {
     -webkit-user-select: none; /* for button */
        -moz-user-select: none;
         -ms-user-select: none;
+}
+
+.letter {
+  background-color: #ffffff;
+  color: #000;
+  float: left;
+  padding: 15px;
+  border: 2px solid black;
+  margin: 2px;
+  width: 30px;
+  height: 30px;
+  font-size: 24px;
+  text-align: center;
+}
+
+.letter.selected {
+  background-color: #0099cc;
+}
+
+#hand {
+  flex: 2;
+  flex-direction: row;
 }
 
 #buttonBox {

@@ -40,16 +40,18 @@ function handleTouch(e) {
   }
 }
 
-document.body.addEventListener('touchstart', handleTouch);
-document.body.addEventListener('touchmove', handleTouch);
-document.body.addEventListener('touchend', handleTouch);
+function init() {
+  document.body.addEventListener('touchstart', handleTouch);
+  document.body.addEventListener('touchmove', handleTouch);
+  document.body.addEventListener('touchend', handleTouch);
+  document.getElementById('fullscreen').addEventListener('touchstart', fullscreen);
+  // Disable zoom on iOS 10.
+  document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+  });
+}
 
-// Disable zoom on iOS 10.
-document.addEventListener('gesturestart', function (e) {
-  e.preventDefault();
-});
 // TODO: replace this with sindresorhus/screenfull.js
-document.getElementById('fullscreen').addEventListener('touchstart', fullscreen);
 function fullscreen(e) {
   document.documentElement.webkitRequestFullScreen();
   if (!screen.orientation.type.includes('landscape')) {
@@ -60,6 +62,6 @@ function fullscreen(e) {
                   window.alert('please rotate device');
                 });
   }
-
 }
+
 
