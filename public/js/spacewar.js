@@ -289,7 +289,8 @@ onConnected = function(id) {
 
 onDisconnected = function(id) {
   console.log(id, 'disconnected');
-  delete players[id];
+  // TODO: find out why ios disconnects. maybe just simulator?
+  // delete players[id];
 };
 
 function sectionForCoordinate(x, y) {

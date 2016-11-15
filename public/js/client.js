@@ -18,7 +18,8 @@ var sendToHost = function(obj) {
 function getRegion(x, y) {
   let regions = document.getElementsByClassName('touch-region');
   let check = (x, left, width) => x >= left && x <= left + width;
-  for (let region of regions) {
+  for (var i = 0; i < regions.length; i++) {
+    let region = regions[i];
     if (check(x, region.offsetLeft, region.offsetWidth) && check(y, region.offsetTop, region.offsetHeight)) {
       return region.dataset.buttonvalue;
     }

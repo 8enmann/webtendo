@@ -1,16 +1,4 @@
 'use strict';
-
-onMessageReceived = function(x) {
-  // TODO: do something with message from host.
-  console.log(x);
-}
-onConnected = function(id) {
-  console.log(id, 'connected');
-  sendToHost({hello: 'host'});
-}
-
-// This can only be called in an onclick handler
-// TODO: stick this inside a dedicated button.
 var joystick = document.getElementById('joystick');
 var stick = document.getElementById('stick');
 function moveStick(x,y) {

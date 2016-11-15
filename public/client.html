@@ -24,5 +24,15 @@
     <script src="js/main.js"></script>
     <script src="js/client.js"></script>
     <script src="js/joystick.js"></script>
+    <script>
+     onMessageReceived = function(x) {
+       // TODO: do something with message from host.
+       console.log(x);
+     }
+     onConnected = function(id) {
+       console.log(id, 'connected');
+       sendToHost({hello: 'host'});
+     }
+    </script>
   </body>
 </html>
