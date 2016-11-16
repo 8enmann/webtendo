@@ -21,6 +21,11 @@ io.sockets.on('connection', function(socket) {
   var socketClientId;
   var hostId;
   var socketRoom;
+  // TODO: find a better way to determine if we're on heroku.
+  if (process.env.PORT) {
+    socketRoom = socket.request.connection.remoteAddress;
+    console.log('socketRoom', socketRoom);
+  }
 
   // convenience function to log server messages on the client
   function log() {
@@ -30,8 +35,8 @@ io.sockets.on('connection', function(socket) {
     console.log(array);
   }
 
-  // Message passthrough, client expects 'type' property.
-  socket.on('message', (room, message) => {
+  // Message passthrough for signaling.
+  socket.on('message', message => {
     log('Client said: ', message);
     if (message.recipient) {
       io.to(clients[message.recipient]).emit('message', message);
@@ -41,10 +46,11 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('create or join', function(room, clientId, isHost) {
+    socketRoom = room || socketRoom || 'foo';
+    room = socketRoom;
     log('create or join room ' + room + ' from ' + clientId + ' ' + socket.handshake.address + '//' + socket.request.connection.remoteAddress);
     clients[clientId] = socket.id;
     socketClientId = clientId;
-    socketRoom = room;
     if (isHost) {
       socket.join(room);
       hosts[room] = clientId;
@@ -73,8 +79,8 @@ io.sockets.on('connection', function(socket) {
     if (!socketClientId) {
       return;
     }
-    console.log(socketClientId, 'disconnected from', socketRoom);
-    io.to(clients[hostId]).emit('disconnected', socketRoom, socketClientId);
+    console.log(socketClientId, 'disconnected from ', socketRoom);
+    io.to(clients[hostId]).emit('disconnected', socketClientId);
   });
 
 

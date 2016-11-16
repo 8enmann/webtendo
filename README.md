@@ -21,9 +21,9 @@ Visit [http://localhost:8080](http://localhost:8080) in two tabs
 - [x] Standard "controller" w/ forwarded touch events
 - [x] Example game
 - [x] Heroku deployment
+- [x] Automatic/manual room determination based on external IP
 - [ ] Native client (in progress at 8enmann/WebtendoClient)
 - [ ] Game hosting and selection
-- [ ] Automatic/manual room determination based on external IP
 - [ ] Game save API
 
 

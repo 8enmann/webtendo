@@ -1,4 +1,18 @@
+body {
+    height: 100vh;
+}
 canvas {
-    height: 500px;
+    height: 100%;
     width: 100%;
+}
+.bottomleft {
+    opacity: .5;
+    position: absolute;
+    bottom: 0;
+}
+.mute {
+    background-color: white;
+    display: inline-block;
+    color: black;
+    padding: 2px;
 }

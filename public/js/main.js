@@ -28,7 +28,7 @@ function getClients() {
 }
 // Measure latency at 1Hz.
 const AUTO_PING = false;
-const VERBOSE = false;
+const VERBOSE = true;
 
 /****************************************************************************
  * Initial setup
@@ -45,8 +45,8 @@ var configuration = {
 
 // Create a random room if not already present in the URL.
 isHost = window.location.pathname.includes('host');
-// TODO: get room from server based on external IP, then store in window.location.hash
-var room = 'foo';
+// TODO: allow room override, maybe based on URL hash?
+var room = '';
 // Use session storage to maintain connections across refresh but allow
 // multiple tabs in the same browser for testing purposes.
 // Not to be confused with socket ID.
@@ -99,7 +99,7 @@ socket.on('log', function(array) {
   console.log.apply(console, array);
 });
 
-socket.on('disconnected', (room, clientId) => {
+socket.on('disconnected', clientId => {
   if (onDisconnected) {
     onDisconnected(clientId);
   }
@@ -126,7 +126,7 @@ function sendMessage(message, recipient) {
     rtcSessionDescription: message,
   };
   maybeLog()('Client sending message: ', payload);
-  socket.emit('message', room, payload);
+  socket.emit('message', payload);
 }
 
 /**
@@ -185,7 +185,12 @@ function signalingMessageCallback(message) {
 function createPeerConnection(isHost, config, recipientClientId) {
   maybeLog()('Creating Peer connection. isHost?', isHost, 'recipient', recipientClientId, 'config:',
              config);
-  peerConns[recipientClientId] = new RTCPeerConnection(config);
+  try {
+    peerConns[recipientClientId] = new RTCPeerConnection(config);
+  } catch(e) {
+    alert('This browser is not supported. Please use Android Chrome or iOS native app.');
+    throw e;
+  }
 
   // send any ice candidates to the other peer
   peerConns[recipientClientId].onicecandidate = function(event) {
