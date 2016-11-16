@@ -99,7 +99,7 @@ socket.on('log', function(array) {
   console.log.apply(console, array);
 });
 
-socket.on('disconnected', (room, clientId) => {
+socket.on('disconnected', clientId => {
   if (onDisconnected) {
     onDisconnected(clientId);
   }
@@ -126,7 +126,7 @@ function sendMessage(message, recipient) {
     rtcSessionDescription: message,
   };
   maybeLog()('Client sending message: ', payload);
-  socket.emit('message', room, payload);
+  socket.emit('message', payload);
 }
 
 /**
