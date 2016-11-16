@@ -21,7 +21,7 @@ io.sockets.on('connection', function(socket) {
   var socketClientId;
   var hostId;
   var socketRoom;
-  console.log(JSON.stringify(socket.request));
+  console.log(JSON.stringify(socket.request.headers));
   // TODO: find a better way to determine if we're on heroku.
   if (process.env.PORT) {
     socketRoom = socket.request.connection.remoteAddress;
