@@ -185,7 +185,12 @@ function signalingMessageCallback(message) {
 function createPeerConnection(isHost, config, recipientClientId) {
   maybeLog()('Creating Peer connection. isHost?', isHost, 'recipient', recipientClientId, 'config:',
              config);
-  peerConns[recipientClientId] = new RTCPeerConnection(config);
+  try {
+    peerConns[recipientClientId] = new RTCPeerConnection(config);
+  } catch(e) {
+    alert('This browser is not supported. Please use Android Chrome or iOS native app.');
+    throw e;
+  }
 
   // send any ice candidates to the other peer
   peerConns[recipientClientId].onicecandidate = function(event) {

@@ -1,4 +1,12 @@
+body {
+    height: 100vh;
+}
 canvas {
-    height: 500px;
+    height: 100%;
     width: 100%;
+}
+.bottomleft {
+    opacity:.5;
+    position:absolute;
+    bottom:0;
 }

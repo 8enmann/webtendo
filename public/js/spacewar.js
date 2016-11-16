@@ -7,6 +7,7 @@ var then;
 var ctx;
 var players = {};
 var bullets = [];
+var stars = [];
 var colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'brown', 'black', 'gray'];
 var canvas;
 var collisionSections;
@@ -33,6 +34,20 @@ class Circle {
   }
 }
 
+class Star extends Circle {
+  constructor() {
+    let p = getRandomPosition();
+    super(p.x, p.y, 1);
+  }
+
+  render(ctx) {
+    ctx.beginPath();
+    ctx.fillStyle = 'white';
+    ctx.arc(this.x, this.y, this.r, 0, 2*Math.PI);
+    ctx.fill();
+  }
+}
+  
 class Player extends Circle {
   constructor(id) {
     let p = getRandomPosition();
@@ -46,28 +61,25 @@ class Player extends Circle {
   }
 
   render(ctx) {
-    // Stroke circle.
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.r, 0, 2*Math.PI);
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-    ctx.stroke();
 
-    // Fill circle.
-    ctx.beginPath();
-    ctx.fillStyle = this.color;
-    ctx.arc(this.x, this.y, this.r, 0, 2*Math.PI);
-    ctx.fill();
+    for (var i = 0; i < 2; i++) {
+      // Triangle
+      ctx.beginPath();
 
-    // Triangle
-    ctx.beginPath();
-    ctx.fillStyle = 'black';
-    // TODO: fix these.
-    let h = this.r * 2;
-    ctx.moveTo(this.x + this.r * Math.cos(this.theta - Math.PI/2), this.y + this.r * Math.sin(this.theta - Math.PI/2));
-    ctx.lineTo(this.x + h * Math.cos(this.theta), this.y + h * Math.sin(this.theta));
-     ctx.lineTo(this.x + this.r * Math.cos(this.theta + Math.PI/2), this.y + this.r * Math.sin(this.theta + Math.PI/2));
-    ctx.stroke();
+      let h = this.r * 2;
+      ctx.moveTo(this.x + h * Math.cos(this.theta), this.y + h * Math.sin(this.theta));
+      ctx.lineTo(this.x + this.r * Math.cos(this.theta - 2*Math.PI/3), this.y + this.r * Math.sin(this.theta - 2*Math.PI/3));
+      ctx.lineTo(this.x + this.r * Math.cos(this.theta + 2*Math.PI/3), this.y + this.r * Math.sin(this.theta + 2*Math.PI/3));
+      ctx.lineTo(this.x + h * Math.cos(this.theta), this.y + h * Math.sin(this.theta));
+      if (i == 0) {
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+    }
   }
 
   update(modifier) {
@@ -79,8 +91,8 @@ class Player extends Circle {
     if (this.b) {
       // Fire weapon.
       bullets.push(new Bullet(
-        this.x + Math.cos(this.theta) * 40,
-        this.y + Math.sin(this.theta) * 40,
+        this.x + Math.cos(this.theta) * 35,
+        this.y + Math.sin(this.theta) * 35,
         // Force velocity to sum to 1.
         Math.cos(this.theta),
         Math.sin(this.theta),
@@ -98,7 +110,6 @@ class Player extends Circle {
     // Bounds.
     this.x = Math.min(Math.max(0, this.x), canvas.offsetWidth);
     this.y = Math.min(Math.max(0, this.y), canvas.offsetHeight);
-    // TODO: if intersecting a bullet, update score & reset position
   }
 
   respawn() {
@@ -180,6 +191,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
   canvas.style.height = h + "px";
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
 
+
+  for (var i = 0; i < 100; i++) {
+    stars.push(new Star());
+  }
+
+
   then = Date.now();
   main();
 });
@@ -247,20 +264,19 @@ function getRandomPosition() {
   return {x: Math.random() * canvas.offsetWidth, y: Math.random() * canvas.offsetHeight};
 }
 
+
 // Draw everything
 var render = function () {
   // Clear
-  ctx.fillStyle = "white";
+  ctx.fillStyle = 'black';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // TODO: make classes for players and bullets and just call their render methods.
+  stars.forEach(star => star.render(ctx));
   bullets.forEach(bullet => bullet.render(ctx));
-  for (let id in players) {
-    players[id].render(ctx);
-  }
+  Object.values(players).forEach(player => player.render(ctx));
 
   // Scoreboard
-  ctx.fillStyle = "black";
+  ctx.fillStyle = "white";
   ctx.font = "24px Helvetica";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
