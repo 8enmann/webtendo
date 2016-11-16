@@ -22,9 +22,10 @@ function moveStick(x,y) {
 
   stick.style.left = newLeft + 'px';
   stick.style.top = newTop + 'px';
+
   return {
-    x: Math.max(-maxDistance, Math.min(maxDistance, relativeX + Math.sign(relativeX) * stick.offsetWidth / 2)) / maxDistance,
-    y: Math.max(-maxDistance, Math.min(maxDistance, relativeY + Math.sign(relativeY) * stick.offsetWidth / 2)) / maxDistance,
+    x: Math.min(maxDistance, distance) * Math.cos(theta) / maxDistance,
+    y: Math.min(maxDistance, distance) * Math.sin(theta) / maxDistance,
   };
 }
 
