@@ -107,7 +107,7 @@ socket.on('disconnected', clientId => {
 
 socket.on('message', signalingMessageCallback);
 
-socket.on('nohost', () => console.error('No host'));
+socket.on('nohost', room => console.error('No host for', room));
 
 // Join a room
 socket.emit('create or join', room, clientId, isHost);

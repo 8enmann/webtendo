@@ -58,7 +58,7 @@ io.sockets.on('connection', function(socket) {
       return;
     }
     if (!io.sockets.adapter.rooms[room]) {
-      socket.emit('nohost');
+      socket.emit('nohost', room);
       return;
     }
     var numClients = io.sockets.adapter.rooms[room].length;
