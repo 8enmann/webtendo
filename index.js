@@ -46,7 +46,8 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('create or join', function(room, clientId, isHost) {
-    room = socketRoom || room;
+    socketRoom = room || socketRoom || 'foo';
+    room = socketRoom;
     log('create or join room ' + room + ' from ' + clientId + ' ' + socket.handshake.address + '//' + socket.request.connection.remoteAddress);
     clients[clientId] = socket.id;
     socketClientId = clientId;
