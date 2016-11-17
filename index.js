@@ -21,8 +21,7 @@ io.sockets.on('connection', function(socket) {
   var socketClientId;
   var hostId;
   var socketRoom;
-  // TODO: find a better way to determine if we're on heroku.
-  if (process.env.PORT) {
+  if (socket.request.headers['x-forwarded-for']) {
     socketRoom = socket.request.headers['x-forwarded-for'];
     console.log('socketRoom', socketRoom);
   }

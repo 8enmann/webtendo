@@ -41,8 +41,6 @@ var configuration = {
   ]
 };
 
-// Attach event handlers
-
 // Create a random room if not already present in the URL.
 isHost = window.location.pathname.includes('host');
 // TODO: allow room override, maybe based on URL hash?
@@ -91,7 +89,7 @@ socket.on('full', function(room) {
 });
 
 socket.on('joined', function(room, clientId) {
-  maybeLog()(clientId, 'joined');
+  maybeLog()(clientId, 'joined', room);
   createPeerConnection(isHost, configuration, clientId);
 });
 
