@@ -41,7 +41,7 @@ io.sockets.on('connection', function(socket) {
     if (message.recipient) {
       io.to(clients[message.recipient]).emit('message', message);
     } else {
-      io.to(room).emit('message', message);
+      io.to(socketRoom).emit('message', message);
     }
   });
 
