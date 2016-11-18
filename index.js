@@ -21,9 +21,8 @@ io.sockets.on('connection', function(socket) {
   var socketClientId;
   var hostId;
   var socketRoom;
-  // TODO: find a better way to determine if we're on heroku.
-  if (process.env.PORT) {
-    socketRoom = socket.request.connection.remoteAddress;
+  if (socket.request.headers['x-forwarded-for']) {
+    socketRoom = socket.request.headers['x-forwarded-for'];
     console.log('socketRoom', socketRoom);
   }
 
@@ -41,7 +40,7 @@ io.sockets.on('connection', function(socket) {
     if (message.recipient) {
       io.to(clients[message.recipient]).emit('message', message);
     } else {
-      io.to(room).emit('message', message);
+      io.to(socketRoom).emit('message', message);
     }
   });
 
@@ -58,7 +57,7 @@ io.sockets.on('connection', function(socket) {
       return;
     }
     if (!io.sockets.adapter.rooms[room]) {
-      socket.emit('nohost');
+      socket.emit('nohost', room);
       return;
     }
     var numClients = io.sockets.adapter.rooms[room].length;

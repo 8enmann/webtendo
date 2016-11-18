@@ -53,15 +53,19 @@ function init() {
 }
 
 // TODO: replace this with sindresorhus/screenfull.js
-function fullscreen(e) {
-  document.documentElement.webkitRequestFullScreen();
-  if (!screen.orientation.type.includes('landscape')) {
-    screen.orientation.lock('landscape')
-          .then(()=> console.log('switched to landscape'),
-                err => {
-                  console.error(err);
-                  window.alert('please rotate device');
-                });
+var fullscreenButton = document.getElementById('fullscreen');
+if (fullscreenButton) {
+  fullscreenButton.addEventListener('touchstart', fullscreen);
+  function fullscreen(e) {
+    document.documentElement.webkitRequestFullScreen();
+    if (!screen.orientation.type.includes('landscape')) {
+      screen.orientation.lock('landscape')
+            .then(()=> console.log('switched to landscape'),
+                  err => {
+                    console.error(err);
+                    window.alert('please rotate device');
+                  });
+    }
   }
 }
 
