@@ -1,4 +1,7 @@
 'use strict';
+
+import * as client from './client';
+
 var joystick = document.getElementById('joystick');
 var stick = document.getElementById('stick');
 function moveStick(x,y) {
@@ -29,7 +32,7 @@ function moveStick(x,y) {
   };
 }
 
-onTouch = function(e, touch, region) {
+client.callbacks.onTouch = function(e, touch, region) {
   // In joystick part of screen.
   if (region === 'stick') {
     let position = {x: 0, y: 0};
@@ -38,7 +41,7 @@ onTouch = function(e, touch, region) {
     } else {
       position = moveStick(touch.pageX - joystick.offsetLeft, touch.pageY - joystick.offsetTop);
     }
-    sendToHost({
+    client.sendToHost({
       action: e.type,
       value: region,
       position: position,
@@ -47,7 +50,7 @@ onTouch = function(e, touch, region) {
     // In button part of screen. Ignore moves.
     // TODO: fix highlighting.
     if (e.type !== 'touchmove') {
-      sendToHost({
+      client.sendToHost({
         action: e.type,
         value: region,
       });

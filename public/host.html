@@ -22,11 +22,8 @@
   <audio id="audio" src="assets/ideetje.mp3" autoplay loop muted>
     Your browser does not support the <code>audio</code> element.
   </audio>
-  
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="scripts/webrtc-adapter/out/adapter.js"></script>
-  <script src="js/main.js"></script>
-  <script src="js/spacewar.js"></script>
+
+  <script src="out/host-bundle.js"></script>
   <script>
     document.getElementById('mute').addEventListener('mousedown', e => {
       var a = document.getElementById('audio');

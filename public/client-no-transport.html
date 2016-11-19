@@ -18,35 +18,6 @@
       <button data-buttonvalue="b" class="b touch-region">B</button>
     </div>
     <div id="latency">Connecting...</div>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="scripts/webrtc-adapter/out/adapter.js"></script>
-    <script src="js/client.js"></script>
-    <script src="js/joystick.js"></script>
-    <script>
-     (function () {
-       // Takes a moment for WebViewBridge to be ready, so setTimeout.
-       setTimeout(() => {
-       if (WebViewBridge) {
-         WebViewBridge.onMessage = function (stringifiedMessage) {
-           if (onMessageReceived) {
-             onMessageReceived(JSON.parse(stringifiedMessage));
-           }
-         };
-         sendToHost = function(message) {
-           WebViewBridge.send(JSON.stringify(message));
-         };
-       }
-       }, 500);
-     }())
-     var onMessageReceived = function(x) {
-       // TODO: do something with message from host.
-       console.log(x);
-     }
-     var onConnected = function(id) {
-       console.log(id, 'connected');
-       sendToHost({hello: 'host'});
-     }
-
-    </script>
+    <script src="out/client-bundle.js"></script>
   </body>
 </html>

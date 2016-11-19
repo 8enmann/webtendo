@@ -1,29 +1,35 @@
 'use strict';
 
+import io from 'socket.io-client';
+import 'webrtc-adapter';
+
 /****************************************************************************
  * Public interface
  ****************************************************************************/
 
-// Called when a message is received. Host can check message.clientId for sender.
-var onMessageReceived;
+export var callbacks = {
+  // Called when a message is received. Host can check message.clientId for sender.
+  onMessageReceived: undefined, 
 // Called when a data channel opens, passing clientId as argument.
-var onConnected;
-// Called when a data channel closes, passing clientId as argument.
-var onDisconnected;
+  onConnected: undefined,
+  // Called when a data channel closes, passing clientId as argument.
+  onDisconnected: undefined,
+};
+
 // Am I the host?
-var isHost;
+export var isHost;
 // My ID.
-var clientId;
+export var clientId;
 // Send a message to a particular client.
-function sendToClient(recipientId, obj) {
+export function sendToClient(recipientId, obj) {
   return dataChannels[recipientId].send(JSON.stringify(obj));
 }
 // Send a message to all clients.
-function broadcast(obj) {
+export function broadcast(obj) {
   return getClients().map(client => sendToClient(client, obj));
 }
 // Get a list of all the clients connected.
-function getClients() {
+export function getClients() {
   return Object.keys(dataChannels);
 }
 // Measure latency at 1Hz.
@@ -59,59 +65,70 @@ maybeLog()('Session clientId ' + clientId);
  * Signaling server
  ****************************************************************************/
 
-// Connect to the signaling server
-var socket = io.connect();
-
-socket.on('ipaddr', function(ipaddr) {
-  maybeLog()('Server IP address is: ' + ipaddr);
-  if (isHost) {
-    document.getElementById('ip').innerText = 'Clients connect to ' + ipaddr;
+// Connect to the signaling server if we have webrtc access.
+var socket;
+try {
+  new RTCSessionDescription();
+  socket = io.connect();
+  attachListeners(socket);
+} catch (e) {
+  console.log('No WebRTC detected, bailing out.');
+  if (location.hash !== '#rn') {
+    alert('This browser is not supported. Please use Android Chrome or iOS native app.');
   }
-  // updateRoomURL(ipaddr);
-});
+}
 
-socket.on('created', function(room, hostClientId) {
-  maybeLog()('Created room', room, '- my client ID is', clientId);
-  if (!isHost) {
-    // Get dangling clients to reconnect if a host stutters.
-    peerConns = {};
-    dataChannels = {};
-    socket.emit('create or join', room, clientId, isHost);
+function attachListeners(socket) {
+  socket.on('ipaddr', function(ipaddr) {
+    maybeLog()('Server IP address is: ' + ipaddr);
+    if (isHost) {
+      document.getElementById('ip').innerText = 'Clients connect to ' + ipaddr;
+    }
+  });
+
+  socket.on('created', function(room, hostClientId) {
+    maybeLog()('Created room', room, '- my client ID is', clientId);
+    if (!isHost) {
+      // Get dangling clients to reconnect if a host stutters.
+      peerConns = {};
+      dataChannels = {};
+      socket.emit('create or join', room, clientId, isHost);
+    }
+  });
+
+  socket.on('full', function(room) {
+    //alert('Room ' + room + ' is full. We will create a new room for you.');
+    //window.location.hash = '';
+    //window.location.reload();
+    maybeLog()('server thinks room is full');
+    // TODO: remove this
+  });
+
+  socket.on('joined', function(room, clientId) {
+    maybeLog()(clientId, 'joined', room);
+    createPeerConnection(isHost, configuration, clientId);
+  });
+
+  socket.on('log', function(array) {
+    console.log.apply(console, array);
+  });
+
+  socket.on('disconnected', clientId => {
+    if (callbacks.onDisconnected) {
+      callbacks.onDisconnected(clientId);
+    }
+  });
+
+  socket.on('message', signalingMessageCallback);
+
+  socket.on('nohost', room => console.error('No host for', room));
+
+  // Join a room
+  socket.emit('create or join', room, clientId, isHost);
+
+  if (location.hostname.match(/localhost|127\.0\.0/)) {
+    socket.emit('ipaddr');
   }
-});
-
-socket.on('full', function(room) {
-  //alert('Room ' + room + ' is full. We will create a new room for you.');
-  //window.location.hash = '';
-  //window.location.reload();
-  maybeLog()('server thinks room is full');
-  // TODO: remove this
-});
-
-socket.on('joined', function(room, clientId) {
-  maybeLog()(clientId, 'joined', room);
-  createPeerConnection(isHost, configuration, clientId);
-});
-
-socket.on('log', function(array) {
-  console.log.apply(console, array);
-});
-
-socket.on('disconnected', clientId => {
-  if (onDisconnected) {
-    onDisconnected(clientId);
-  }
-});
-
-socket.on('message', signalingMessageCallback);
-
-socket.on('nohost', room => console.error('No host for', room));
-
-// Join a room
-socket.emit('create or join', room, clientId, isHost);
-
-if (location.hostname.match(/localhost|127\.0\.0/)) {
-  socket.emit('ipaddr');
 }
 
 /**
@@ -126,20 +143,6 @@ function sendMessage(message, recipient) {
   maybeLog()('Client sending message: ', payload);
   socket.emit('message', payload);
 }
-
-/**
- * Updates URL on the page so that users can copy&paste it to their peers.
- */
-// function updateRoomURL(ipaddr) {
-//   var url;
-//   if (!ipaddr) {
-//     url = location.href;
-//   } else {
-//     url = location.protocol + '//' + ipaddr + ':2013/#' + room;
-//   }
-//   roomURL.innerHTML = url;
-// }
-
 
 /****************************************************************************
  * WebRTC peer connection and data channel
@@ -183,12 +186,7 @@ function signalingMessageCallback(message) {
 function createPeerConnection(isHost, config, recipientClientId) {
   maybeLog()('Creating Peer connection. isHost?', isHost, 'recipient', recipientClientId, 'config:',
              config);
-  try {
-    peerConns[recipientClientId] = new RTCPeerConnection(config);
-  } catch(e) {
-    alert('This browser is not supported. Please use Android Chrome or iOS native app.');
-    throw e;
-  }
+  peerConns[recipientClientId] = new RTCPeerConnection(config);
 
   // send any ice candidates to the other peer
   peerConns[recipientClientId].onicecandidate = function(event) {
@@ -236,13 +234,13 @@ function onDataChannelCreated(channel) {
   maybeLog()('onDataChannelCreated:', channel);
 
   channel.onclose = () => {
-    if (onDisconnected) {
-      onDisconnected(channel.label);
+    if (callbacks.onDisconnected) {
+      callbacks.onDisconnected(channel.label);
     }
   };
   channel.onopen = () => {
-    if (onConnected) {
-      onConnected(channel.label);
+    if (callbacks.onConnected) {
+      callbacks.onConnected(channel.label);
     }
     if (AUTO_PING) {
       // As long as the channel is open, send a message 1/sec to
@@ -276,9 +274,9 @@ function onDataChannelCreated(channel) {
       var str = 'round trip latency ' + (performance.now() - x.time).toFixed(2) + ' ms';
       // maybeLog()(str);
       document.getElementById('latency').innerText = str;
-    } else if (onMessageReceived) {
+    } else if (callbacks.onMessageReceived) {
       x.clientId = channel.label;
-      onMessageReceived(x);
+      callbacks.onMessageReceived(x);
     } else {
       maybeLog()('unknown action');
     }

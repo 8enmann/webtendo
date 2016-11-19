@@ -1,4 +1,5 @@
 'use strict';
+import * as webtendo from './webtendo';
 
 const numCollisionRows = 4;
 const numCollisionColumns = 6;
@@ -179,28 +180,6 @@ class Bullet extends Circle {
   }
 }
 
-
-document.addEventListener("DOMContentLoaded", function(event) {
-  canvas = document.getElementById('canvas');
-  ctx = canvas.getContext("2d");
-  // Awful hack from stackoverflow to increase canvas resolution.
-  const ratio = window.devicePixelRatio, w = canvas.offsetWidth, h = canvas.offsetHeight;
-  canvas.width = w * ratio;
-  canvas.height = h * ratio;
-  canvas.style.width = w + "px";
-  canvas.style.height = h + "px";
-  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-
-
-  for (var i = 0; i < 100; i++) {
-    stars.push(new Star());
-  }
-
-
-  then = Date.now();
-  main();
-});
-
 function blankCollisionSections() {
   var sections = new Array();
   for (var i = 0; i < numCollisionRows * numCollisionColumns; i++) {
@@ -285,7 +264,7 @@ var render = function () {
 };
 
 
-onMessageReceived = function(x) {
+webtendo.callbacks.onMessageReceived = function(x) {
   // console.log(x);
   let player = players[x.clientId];
   if (x.action === 'touchend') {
@@ -295,15 +274,15 @@ onMessageReceived = function(x) {
   }
 };
 
-onConnected = function(id) {
+webtendo.callbacks.onConnected = function(id) {
   console.log(id, 'connected');
-  sendToClient(id, {hello: 'client'});
+  webtendo.sendToClient(id, {hello: 'client'});
   if (!players[id]) {
     players[id] = new Player(id);
   }
 };
 
-onDisconnected = function(id) {
+webtendo.callbacks.onDisconnected = function(id) {
   console.log(id, 'disconnected');
   // TODO: find out why ios disconnects. maybe just simulator?
   // delete players[id];
@@ -321,3 +300,24 @@ function sectionForCoordinate(x, y) {
 
   return column + row * (numCollisionColumns);
 };
+
+(function init() {
+  canvas = document.getElementById('canvas');
+  ctx = canvas.getContext("2d");
+  // Awful hack from stackoverflow to increase canvas resolution.
+  const ratio = window.devicePixelRatio, w = canvas.offsetWidth, h = canvas.offsetHeight;
+  canvas.width = w * ratio;
+  canvas.height = h * ratio;
+  canvas.style.width = w + "px";
+  canvas.style.height = h + "px";
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+
+  for (var i = 0; i < 100; i++) {
+    stars.push(new Star());
+  }
+
+
+  then = Date.now();
+  main();
+})();

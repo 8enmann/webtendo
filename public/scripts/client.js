@@ -1,14 +1,34 @@
 'use strict';
 
+var webtendo = require('./webtendo');
+
+
 /****************************************************************************
  * Public interface
  ****************************************************************************/
 // Called whenever body is touched. Args are event and the data-buttonvalue of
 // elements with class touch-region, if any.
-var onTouch;
+export var callbacks = {onTouch: undefined};
 // Convenience wrapper for sendToClient (and to avoid confusion).
-var sendToHost = function(obj) {
-  return sendToClient(clientId, obj);
+export var sendToHost = function(obj) {
+  return webtendo.sendToClient(webtendo.clientId, obj);
+}
+
+
+try {
+  setTimeout(() => {
+    WebViewBridge;
+    WebViewBridge.onMessage = function (stringifiedMessage) {
+      if (webtendo.callbacks.onMessageReceived) {
+        webtendo.callbacks.onMessageReceived(JSON.parse(stringifiedMessage));
+      }
+    };
+    sendToHost = function(message) {
+      WebViewBridge.send(JSON.stringify(message));
+    };
+  }, 500);
+} catch (e) {
+  console.log(e, e.stack);
 }
 
 /****************************************************************************
@@ -34,8 +54,8 @@ function handleTouch(e) {
     // Any touches elsewhere while a finger is down on the joystick will
     // block input on the rest of the screen.
     let region = getRegion(touches[i].pageX, touches[i].pageY);
-    if (onTouch) {
-      onTouch(e, touches[i], region);
+    if (callbacks.onTouch) {
+      callbacks.onTouch(e, touches[i], region);
     }
     // return true;
   }
@@ -66,3 +86,12 @@ if (fullscreenButton) {
   }
 }
 
+webtendo.callbacks.onMessageReceived = function(x) {
+  // TODO: do something with message from host.
+  console.log(x);
+}
+
+webtendo.callbacks.onConnected = function(id) {
+  console.log(id, 'connected');
+  sendToHost({hello: 'host'});
+}
