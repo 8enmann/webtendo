@@ -1,7 +1,6 @@
 'use strict';
 
-var webtendo = require('./webtendo');
-
+import * as webtendo from './webtendo';
 
 /****************************************************************************
  * Public interface
@@ -15,9 +14,8 @@ export var sendToHost = function(obj) {
 }
 
 
-try {
-  setTimeout(() => {
-    WebViewBridge;
+setTimeout(() => {
+  try {
     WebViewBridge.onMessage = function (stringifiedMessage) {
       if (webtendo.callbacks.onMessageReceived) {
         webtendo.callbacks.onMessageReceived(JSON.parse(stringifiedMessage));
@@ -26,10 +24,10 @@ try {
     sendToHost = function(message) {
       WebViewBridge.send(JSON.stringify(message));
     };
-  }, 500);
-} catch (e) {
-  console.log(e, e.stack);
-}
+  } catch (e) {
+    console.log(e, e.stack);
+  }
+}, 500);
 
 /****************************************************************************
  * Private

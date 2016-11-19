@@ -122,7 +122,13 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var webtendo = __webpack_require__(2);
+	exports.sendToHost = exports.callbacks = undefined;
+
+	var _webtendo = __webpack_require__(2);
+
+	var webtendo = _interopRequireWildcard(_webtendo);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	/****************************************************************************
 	 * Public interface
@@ -135,9 +141,8 @@
 	  return webtendo.sendToClient(webtendo.clientId, obj);
 	};
 
-	try {
-	  setTimeout(function () {
-	    WebViewBridge;
+	setTimeout(function () {
+	  try {
 	    WebViewBridge.onMessage = function (stringifiedMessage) {
 	      if (webtendo.callbacks.onMessageReceived) {
 	        webtendo.callbacks.onMessageReceived(JSON.parse(stringifiedMessage));
@@ -146,10 +151,10 @@
 	    exports.sendToHost = sendToHost = function sendToHost(message) {
 	      WebViewBridge.send(JSON.stringify(message));
 	    };
-	  }, 500);
-	} catch (e) {
-	  console.log(e, e.stack);
-	}
+	  } catch (e) {
+	    console.log(e, e.stack);
+	  }
+	}, 500);
 
 	/****************************************************************************
 	 * Private
