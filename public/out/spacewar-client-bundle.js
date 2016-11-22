@@ -324,9 +324,14 @@
 	  attachListeners(socket);
 	} catch (e) {
 	  console.log('No WebRTC detected, bailing out.');
-	  if (location.hash !== '#rn') {
-	    alert('This browser is not supported. Please use Android Chrome or iOS native app.');
-	  }
+	  setTimeout(function () {
+	    try {
+	      WebViewBridge;
+	    } catch (e) {
+	      console.log('Dis don look like ReactNative...');
+	      alert('This browser is not supported. Please use Android Chrome or iOS native app.');
+	    }
+	  }, 500);
 	}
 	
 	function attachListeners(socket) {
