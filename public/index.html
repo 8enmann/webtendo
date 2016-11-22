@@ -30,5 +30,12 @@
     </div>
   </div>
 </body>
-
+<script>
+ // Hide host section. TODO: do this for mobile clients?
+ if (location.hash === '#rn') {
+   for (var x of document.getElementsByClassName('hosts')) {
+     x.style.display = 'none';
+   }
+ }
+</script>
 </html>
