@@ -1,7 +1,7 @@
-'use strict';
+// @flow
 import * as webtendo from '../scripts/webtendo';
 
-const numCollisionRows = 4;
+const numCollisionRows: number = 4;
 const numCollisionColumns = 6;
 
 var then;
