@@ -1,5 +1,5 @@
 'use strict';
-import * as webtendo from './webtendo';
+import * as webtendo from '../scripts/webtendo';
 
 const numCollisionRows = 4;
 const numCollisionColumns = 6;

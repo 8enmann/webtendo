@@ -1,27 +1,38 @@
 .bigbutton {
-    color:black;
     font-size: 3em;
-    text-decoration: none;
-    justify-content:center;
-    height:100%;
-    width: calc(100% - 2em);
-    flex-direction:column;
-    background-color:white;
-    margin:1em;
-    border-radius:1em;
-    align-content: center;
-    display:flex;
-    flex:1;
-    text-align: center;
 }
 
+h1 {
+    text-align: center;
+    font-size: 3em;
+}
+a {
+    font-size: 2em;
+    text-decoration: none;
+    background-color: white;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 1em;
+}
+
+.linklist {
+    text-align: center;
+    
+    display: flex;
+    flex-direction: column;
+}
 
 .linkbox {
     display: flex;
     align-items: center;
-    height: 50%;
     width:100%;
     justify-content:center;
+}
+
+.icon {
+    font-size: 1em;
+    height: 1em;
+    color: black;
 }
 
 @media (orientation: portrait) {

@@ -1,6 +1,6 @@
 'use strict';
 
-import * as client from './client';
+import * as client from '../scripts/client';
 
 var joystick = document.getElementById('joystick');
 var stick = document.getElementById('stick');

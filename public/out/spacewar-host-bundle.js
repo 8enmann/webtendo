@@ -42,195 +42,474 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/*!************************************!*\
-  !*** ./public/scripts/joystick.js ***!
-  \************************************/
+/*!*************************************!*\
+  !*** ./public/spacewar/spacewar.js ***!
+  \*************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var _client = __webpack_require__(/*! ./client */ 1);
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var client = _interopRequireWildcard(_client);
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	var joystick = document.getElementById('joystick');
-	var stick = document.getElementById('stick');
-	function moveStick(x, y) {
-	  var radius = joystick.offsetWidth / 2;
-	  var relativeX = x - radius;
-	  var relativeY = y - radius;
-	  // Check to see if the point is out of bounds and if so, clip.
-	  var distance = Math.sqrt(Math.pow(relativeX, 2) + Math.pow(relativeY, 2));
-	  var theta = Math.atan2(relativeY, relativeX);
-	  var maxDistance = radius - stick.offsetWidth / 2;
-	  if (distance > maxDistance) {
-	    stick.style.backgroundColor = 'red';
-	    x = maxDistance * Math.cos(theta) + radius;
-	    y = maxDistance * Math.sin(theta) + radius;
-	  } else {
-	    stick.style.backgroundColor = 'white';
-	  }
-	
-	  var newLeft = x - stick.offsetWidth / 2;
-	  var newTop = y - stick.offsetHeight / 2;
-	
-	  stick.style.left = newLeft + 'px';
-	  stick.style.top = newTop + 'px';
-	
-	  return {
-	    x: Math.min(maxDistance, distance) * Math.cos(theta) / maxDistance,
-	    y: Math.min(maxDistance, distance) * Math.sin(theta) / maxDistance
-	  };
-	}
-	
-	client.callbacks.onTouch = function (e, touch, region) {
-	  // In joystick part of screen.
-	  if (region === 'stick') {
-	    var position = { x: 0, y: 0 };
-	    if (e.type === 'touchend') {
-	      resetStick();
-	    } else {
-	      position = moveStick(touch.pageX - joystick.offsetLeft, touch.pageY - joystick.offsetTop);
-	    }
-	    client.sendToHost({
-	      action: e.type,
-	      value: region,
-	      position: position
-	    });
-	  } else {
-	    // In button part of screen. Ignore moves.
-	    // TODO: fix highlighting.
-	    if (e.type !== 'touchmove') {
-	      client.sendToHost({
-	        action: e.type,
-	        value: region
-	      });
-	    }
-	  }
-	};
-	function resetStick() {
-	  moveStick(joystick.offsetHeight / 2, joystick.offsetWidth / 2);
-	}
-	// TODO: call this again on screen orientation change.
-	resetStick();
-
-/***/ },
-/* 1 */
-/*!**********************************!*\
-  !*** ./public/scripts/client.js ***!
-  \**********************************/
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.sendToHost = exports.callbacks = undefined;
-	
-	var _webtendo = __webpack_require__(/*! ./webtendo */ 2);
+	var _webtendo = __webpack_require__(/*! ../scripts/webtendo */ 2);
 	
 	var webtendo = _interopRequireWildcard(_webtendo);
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
-	/****************************************************************************
-	 * Public interface
-	 ****************************************************************************/
-	// Called whenever body is touched. Args are event and the data-buttonvalue of
-	// elements with class touch-region, if any.
-	var callbacks = exports.callbacks = { onTouch: undefined };
-	// Convenience wrapper for sendToClient (and to avoid confusion).
-	var sendToHost = exports.sendToHost = function sendToHost(obj) {
-	  return webtendo.sendToClient(webtendo.clientId, obj);
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var numCollisionRows = 4;
+	var numCollisionColumns = 6;
+	
+	var then;
+	var ctx;
+	var players = {};
+	var bullets = [];
+	var stars = [];
+	var colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'brown', 'black', 'gray'];
+	var canvas;
+	var collisionSections;
+	
+	var Circle = function () {
+	  function Circle(x, y, r) {
+	    _classCallCheck(this, Circle);
+	
+	    this.x = x;
+	    this.y = y;
+	    this.r = r;
+	  }
+	
+	  _createClass(Circle, [{
+	    key: 'intersects',
+	    value: function intersects(other) {
+	      return this.distanceTo(other) < this.r + other.r;
+	    }
+	  }, {
+	    key: 'distanceTo',
+	    value: function distanceTo(other) {
+	      var a = this.x - other.x;
+	      var b = this.y - other.y;
+	      return Math.sqrt(a * a + b * b);
+	    }
+	  }, {
+	    key: 'sectionIndices',
+	    get: function get() {
+	      return [sectionForCoordinate(this.x, this.y)];
+	    }
+	  }]);
+	
+	  return Circle;
+	}();
+	
+	var Star = function (_Circle) {
+	  _inherits(Star, _Circle);
+	
+	  function Star() {
+	    _classCallCheck(this, Star);
+	
+	    var p = getRandomPosition();
+	    return _possibleConstructorReturn(this, (Star.__proto__ || Object.getPrototypeOf(Star)).call(this, p.x, p.y, 1));
+	  }
+	
+	  _createClass(Star, [{
+	    key: 'render',
+	    value: function render(ctx) {
+	      ctx.beginPath();
+	      ctx.fillStyle = 'white';
+	      ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+	      ctx.fill();
+	    }
+	  }, {
+	    key: 'update',
+	    value: function update(modifier) {
+	      this.x += 10 * modifier;
+	      this.x %= canvas.offsetWidth;
+	    }
+	  }]);
+	
+	  return Star;
+	}(Circle);
+	
+	var Player = function (_Circle2) {
+	  _inherits(Player, _Circle2);
+	
+	  function Player(id) {
+	    _classCallCheck(this, Player);
+	
+	    var p = getRandomPosition();
+	
+	    var _this2 = _possibleConstructorReturn(this, (Player.__proto__ || Object.getPrototypeOf(Player)).call(this, p.x, p.y, 15));
+	
+	    _this2.color = colors.pop();
+	    _this2.theta = Math.random() * Math.PI * 2;
+	    _this2.score = 0;
+	    _this2.speed = 100; // px/second
+	    _this2.id = id;
+	    return _this2;
+	  }
+	
+	  _createClass(Player, [{
+	    key: 'render',
+	    value: function render(ctx) {
+	
+	      for (var i = 0; i < 2; i++) {
+	        // Triangle
+	        ctx.beginPath();
+	
+	        var h = this.r * 2;
+	        ctx.moveTo(this.x + h * Math.cos(this.theta), this.y + h * Math.sin(this.theta));
+	        ctx.lineTo(this.x + this.r * Math.cos(this.theta - 2 * Math.PI / 3), this.y + this.r * Math.sin(this.theta - 2 * Math.PI / 3));
+	        ctx.lineTo(this.x + this.r * Math.cos(this.theta + 2 * Math.PI / 3), this.y + this.r * Math.sin(this.theta + 2 * Math.PI / 3));
+	        ctx.lineTo(this.x + h * Math.cos(this.theta), this.y + h * Math.sin(this.theta));
+	        if (i == 0) {
+	          ctx.strokeStyle = 'white';
+	          ctx.lineWidth = 2;
+	          ctx.stroke();
+	        } else {
+	          ctx.fillStyle = this.color;
+	          ctx.fill();
+	        }
+	      }
+	    }
+	  }, {
+	    key: 'update',
+	    value: function update(modifier) {
+	      if (this.a) {
+	        // Boost!
+	        this.speed = 200;
+	      } else {
+	        this.speed = 100;
+	      }
+	      if (this.b) {
+	        // Fire weapon.
+	        bullets.push(new Bullet(this.x + Math.cos(this.theta) * 35, this.y + Math.sin(this.theta) * 35,
+	        // Force velocity to sum to 1.
+	        Math.cos(this.theta), Math.sin(this.theta),
+	        // Who to give points for a kill.
+	        this.id));
+	        // Consume touch so we only fire 1 bullet per press.
+	        delete this.b;
+	      }
+	      if (this.stick) {
+	        this.x += this.stick.position.x * this.speed * modifier;
+	        this.y += this.stick.position.y * this.speed * modifier;
+	        this.theta = Math.atan2(this.stick.position.y, this.stick.position.x);
+	      }
+	      // Bounds.
+	      this.x = Math.min(Math.max(0, this.x), canvas.offsetWidth);
+	      this.y = Math.min(Math.max(0, this.y), canvas.offsetHeight);
+	    }
+	  }, {
+	    key: 'respawn',
+	    value: function respawn() {
+	      var p = getRandomPosition();
+	      this.x = p.x;
+	      this.y = p.y;
+	      this.theta = Math.random() * Math.PI * 2;
+	    }
+	  }]);
+	
+	  return Player;
+	}(Circle);
+	
+	var Bullet = function (_Circle3) {
+	  _inherits(Bullet, _Circle3);
+	
+	  function Bullet(x, y, vx, vy, owner) {
+	    _classCallCheck(this, Bullet);
+	
+	    var _this3 = _possibleConstructorReturn(this, (Bullet.__proto__ || Object.getPrototypeOf(Bullet)).call(this, x, y, 5));
+	
+	    _this3.vx = vx;
+	    _this3.vy = vy;
+	    _this3.owner = owner;
+	    return _this3;
+	  }
+	
+	  _createClass(Bullet, [{
+	    key: 'render',
+	    value: function render(ctx) {
+	      // Fill circle.
+	      ctx.beginPath();
+	      ctx.fillStyle = 'red';
+	      ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+	      ctx.fill();
+	    }
+	  }, {
+	    key: 'update',
+	    value: function update(modifier, index) {
+	      this.x += this.vx * 300 * modifier;
+	      this.y += this.vy * 300 * modifier;
+	
+	      // Handle first collision
+	      var collided = false;
+	      var _iteratorNormalCompletion = true;
+	      var _didIteratorError = false;
+	      var _iteratorError = undefined;
+	
+	      try {
+	        for (var _iterator = this.sectionIndices[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	          var i = _step.value;
+	
+	          var section = collisionSections[i];
+	
+	          if (collided) {
+	            break;
+	          }
+	
+	          var _iteratorNormalCompletion2 = true;
+	          var _didIteratorError2 = false;
+	          var _iteratorError2 = undefined;
+	
+	          try {
+	            for (var _iterator2 = section.players[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+	              var player = _step2.value;
+	
+	              if (this.intersects(player)) {
+	                collided = true;
+	                players[this.owner].score++;
+	                player.respawn();
+	                break;
+	              }
+	            }
+	          } catch (err) {
+	            _didIteratorError2 = true;
+	            _iteratorError2 = err;
+	          } finally {
+	            try {
+	              if (!_iteratorNormalCompletion2 && _iterator2.return) {
+	                _iterator2.return();
+	              }
+	            } finally {
+	              if (_didIteratorError2) {
+	                throw _iteratorError2;
+	              }
+	            }
+	          }
+	
+	          var _iteratorNormalCompletion3 = true;
+	          var _didIteratorError3 = false;
+	          var _iteratorError3 = undefined;
+	
+	          try {
+	            for (var _iterator3 = section.bullets[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+	              var bullet = _step3.value;
+	
+	              if (this.x == bullet.x && this.y == bullet.y && this.owner == bullet.owner) {
+	                continue;
+	              }
+	              if (this.intersects(bullet)) {
+	                collided = true;
+	              }
+	            }
+	          } catch (err) {
+	            _didIteratorError3 = true;
+	            _iteratorError3 = err;
+	          } finally {
+	            try {
+	              if (!_iteratorNormalCompletion3 && _iterator3.return) {
+	                _iterator3.return();
+	              }
+	            } finally {
+	              if (_didIteratorError3) {
+	                throw _iteratorError3;
+	              }
+	            }
+	          }
+	        }
+	
+	        // Despawn bullets that have gone off the map.
+	        // Consider tracking bullet travel distance and capping range.
+	      } catch (err) {
+	        _didIteratorError = true;
+	        _iteratorError = err;
+	      } finally {
+	        try {
+	          if (!_iteratorNormalCompletion && _iterator.return) {
+	            _iterator.return();
+	          }
+	        } finally {
+	          if (_didIteratorError) {
+	            throw _iteratorError;
+	          }
+	        }
+	      }
+	
+	      var isOutOfBounds = this.x < 0 || this.x > canvas.offsetWidth || this.y < 0 || this.y > canvas.offsetHeight;
+	      if (isOutOfBounds || collided) {
+	        bullets.splice(index, 1);
+	      }
+	    }
+	  }]);
+	
+	  return Bullet;
+	}(Circle);
+	
+	function blankCollisionSections() {
+	  var sections = new Array();
+	  for (var i = 0; i < numCollisionRows * numCollisionColumns; i++) {
+	    sections.push({
+	      'players': [],
+	      'bullets': []
+	    });
+	  }
+	  return sections;
+	}
+	
+	function createCollisionSections() {
+	  var newSections = blankCollisionSections();
+	
+	  var _loop = function _loop() {
+	    var bullet = bullets[i];
+	    bullet.sectionIndices.forEach(function (i) {
+	      newSections[i]['bullets'].push(bullet);
+	    });
+	  };
+	
+	  for (var i = bullets.length - 1; i >= 0; i--) {
+	    _loop();
+	  }
+	
+	  var _loop2 = function _loop2() {
+	    var player = players[id];
+	    player.sectionIndices.forEach(function (i) {
+	      newSections[i]['players'].push(player);
+	    });
+	  };
+	
+	  for (var id in players) {
+	    _loop2();
+	  }
+	
+	  return newSections;
+	}
+	
+	// Update positions.
+	function update(modifier) {
+	  collisionSections = createCollisionSections();
+	
+	  for (var i = bullets.length - 1; i >= 0; i--) {
+	    bullets[i].update(modifier, i);
+	  }
+	  Object.values(players).forEach(function (player) {
+	    return player.update(modifier);
+	  });
+	  stars.forEach(function (star) {
+	    return star.update(modifier);
+	  });
+	}
+	
+	// The main game loop
+	function main() {
+	  var now = Date.now();
+	  var delta = now - then;
+	
+	  update(delta / 1000);
+	  render();
+	
+	  then = now;
+	
+	  // Request to do this again ASAP
+	  requestAnimationFrame(main);
 	};
 	
-	setTimeout(function () {
-	  try {
-	    WebViewBridge.onMessage = function (stringifiedMessage) {
-	      if (webtendo.callbacks.onMessageReceived) {
-	        webtendo.callbacks.onMessageReceived(JSON.parse(stringifiedMessage));
-	      }
-	    };
-	    exports.sendToHost = sendToHost = function sendToHost(message) {
-	      WebViewBridge.send(JSON.stringify(message));
-	    };
-	  } catch (e) {
-	    console.log(e, e.stack);
-	  }
-	}, 500);
-	
-	/****************************************************************************
-	 * Private
-	 ****************************************************************************/
-	
-	function getRegion(x, y) {
-	  var regions = document.getElementsByClassName('touch-region');
-	  var check = function check(x, left, width) {
-	    return x >= left && x <= left + width;
-	  };
-	  for (var i = 0; i < regions.length; i++) {
-	    var region = regions[i];
-	    if (check(x, region.offsetLeft, region.offsetWidth) && check(y, region.offsetTop, region.offsetHeight)) {
-	      return region.dataset.buttonvalue;
-	    }
-	  }
+	function getRandomPosition() {
+	  // TODO: also account for obj size
+	  return { x: Math.random() * canvas.offsetWidth, y: Math.random() * canvas.offsetHeight };
 	}
 	
-	function handleTouch(e) {
-	  e.preventDefault();
-	  // console.log(e);
-	  var touches = e.changedTouches;
-	  for (var i = 0; i < touches.length; i++) {
-	    // Any touches elsewhere while a finger is down on the joystick will
-	    // block input on the rest of the screen.
-	    var region = getRegion(touches[i].pageX, touches[i].pageY);
-	    if (callbacks.onTouch) {
-	      callbacks.onTouch(e, touches[i], region);
-	    }
-	    // return true;
-	  }
-	}
+	// Draw everything
+	var render = function render() {
+	  // Clear
+	  ctx.fillStyle = 'black';
+	  ctx.fillRect(0, 0, canvas.width, canvas.height);
 	
-	document.body.addEventListener('touchstart', handleTouch);
-	document.body.addEventListener('touchmove', handleTouch);
-	document.body.addEventListener('touchend', handleTouch);
+	  stars.forEach(function (star) {
+	    return star.render(ctx);
+	  });
+	  bullets.forEach(function (bullet) {
+	    return bullet.render(ctx);
+	  });
+	  Object.values(players).forEach(function (player) {
+	    return player.render(ctx);
+	  });
 	
-	// Disable zoom on iOS 10.
-	document.addEventListener('gesturestart', function (e) {
-	  e.preventDefault();
-	});
-	// TODO: replace this with sindresorhus/screenfull.js
-	var fullscreenButton = document.getElementById('fullscreen');
-	if (fullscreenButton) {
-	  var fullscreen = function fullscreen(e) {
-	    document.documentElement.webkitRequestFullScreen();
-	    if (!screen.orientation.type.includes('landscape')) {
-	      screen.orientation.lock('landscape').then(function () {
-	        return console.log('switched to landscape');
-	      }, function (err) {
-	        console.error(err);
-	        window.alert('please rotate device');
-	      });
-	    }
-	  };
-	
-	  fullscreenButton.addEventListener('touchstart', fullscreen);
-	}
+	  // Scoreboard
+	  ctx.fillStyle = "white";
+	  ctx.font = "24px Helvetica";
+	  ctx.textAlign = "left";
+	  ctx.textBaseline = "top";
+	  // Wow I'm lazy.
+	  ctx.fillText(JSON.stringify(Object.values(players).map(function (player) {
+	    return player.color + ':' + player.score;
+	  })), 0, 0);
+	};
 	
 	webtendo.callbacks.onMessageReceived = function (x) {
-	  // TODO: do something with message from host.
-	  console.log(x);
+	  // console.log(x);
+	  var player = players[x.clientId];
+	  if (x.action === 'touchend') {
+	    delete player[x.value];
+	  } else {
+	    player[x.value] = x;
+	  }
 	};
 	
 	webtendo.callbacks.onConnected = function (id) {
 	  console.log(id, 'connected');
-	  sendToHost({ hello: 'host' });
+	  webtendo.sendToClient(id, { hello: 'client' });
+	  if (!players[id]) {
+	    players[id] = new Player(id);
+	  }
 	};
+	
+	webtendo.callbacks.onDisconnected = function (id) {
+	  console.log(id, 'disconnected');
+	  // TODO: find out why ios disconnects. maybe just simulator?
+	  // delete players[id];
+	};
+	
+	function sectionForCoordinate(x, y) {
+	  x = Math.max(0, Math.min(x, canvas.offsetWidth - 1));
+	  y = Math.max(0, Math.min(y, canvas.offsetHeight - 1));
+	
+	  var rowHeight = canvas.offsetHeight / numCollisionRows;
+	  var columnWidth = canvas.offsetWidth / numCollisionColumns;
+	
+	  var row = Math.floor(y / rowHeight);
+	  var column = Math.floor(x / columnWidth);
+	
+	  return column + row * numCollisionColumns;
+	};
+	
+	(function init() {
+	  canvas = document.getElementById('canvas');
+	  ctx = canvas.getContext("2d");
+	  // Awful hack from stackoverflow to increase canvas resolution.
+	  var ratio = window.devicePixelRatio,
+	      w = canvas.offsetWidth,
+	      h = canvas.offsetHeight;
+	  canvas.width = w * ratio;
+	  canvas.height = h * ratio;
+	  canvas.style.width = w + "px";
+	  canvas.style.height = h + "px";
+	  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+	
+	  for (var i = 0; i < 100; i++) {
+	    stars.push(new Star());
+	  }
+	
+	  then = Date.now();
+	  main();
+	})();
 
 /***/ },
+/* 1 */,
 /* 2 */
 /*!************************************!*\
   !*** ./public/scripts/webtendo.js ***!
@@ -10765,4 +11044,4 @@
 
 /***/ }
 /******/ ]);
-//# sourceMappingURL=client-bundle.js.map
+//# sourceMappingURL=spacewar-host-bundle.js.map
