@@ -6,6 +6,7 @@
     "type": "git",
     "url": "https://github.com/8enmann/webtendo.git"
   },
+  "devtool": "source-map",
   "dependencies": {
     "node-static": "0.7.7",
     "socket.io": "^1.5.1",
@@ -14,7 +15,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "webpack": "webpack --progress --colors --watch"
+    "webpack": "webpack --progress --colors --watch -d"
   },
   "engines": {
     "node": "6.6.0",

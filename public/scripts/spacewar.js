@@ -47,6 +47,10 @@ class Star extends Circle {
     ctx.arc(this.x, this.y, this.r, 0, 2*Math.PI);
     ctx.fill();
   }
+  update(modifier) {
+    this.x += 10 * modifier;
+    this.x %= canvas.offsetWidth;
+  }
 }
   
 class Player extends Circle {
@@ -218,10 +222,8 @@ function update(modifier) {
   for (var i = bullets.length - 1; i >= 0; i--) {
     bullets[i].update(modifier, i);
   }
-
-  for (var id in players) {
-    players[id].update(modifier);
-  }
+  Object.values(players).forEach(player => player.update(modifier));
+  stars.forEach(star => star.update(modifier));
 }
 
 // The main game loop
@@ -260,9 +262,8 @@ var render = function () {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   // Wow I'm lazy.
-  ctx.fillText(JSON.stringify(Object.keys(players).map(id=>players[id].color + ': ' + players[id].score)), 0, 0);
+  ctx.fillText(JSON.stringify(Object.values(players).map(player=>`${player.color}:${player.score}`)), 0, 0);
 };
-
 
 webtendo.callbacks.onMessageReceived = function(x) {
   // console.log(x);
