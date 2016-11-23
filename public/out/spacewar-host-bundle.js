@@ -83,6 +83,8 @@
 	    this.y = y;
 	    this.r = r;
 	  }
+	  // Radius
+	
 	
 	  _createClass(Circle, [{
 	    key: 'intersects',
@@ -138,6 +140,7 @@
 	var Player = function (_Circle2) {
 	  _inherits(Player, _Circle2);
 	
+	  // Base 32 random ID.
 	  function Player(id) {
 	    _classCallCheck(this, Player);
 	
@@ -152,6 +155,8 @@
 	    _this2.id = id;
 	    return _this2;
 	  }
+	  // ** user inputs **
+	
 	
 	  _createClass(Player, [{
 	    key: 'render',
@@ -230,6 +235,8 @@
 	    _this3.owner = owner;
 	    return _this3;
 	  }
+	  // Player.id that fired this bullet.
+	
 	
 	  _createClass(Bullet, [{
 	    key: 'render',
@@ -351,7 +358,7 @@
 	}(Circle);
 	
 	function blankCollisionSections() {
-	  var sections = new Array();
+	  var sections = [];
 	  for (var i = 0; i < numCollisionRows * numCollisionColumns; i++) {
 	    sections.push({
 	      'players': [],
@@ -475,6 +482,7 @@
 	};
 	
 	function sectionForCoordinate(x, y) {
+	  // TODO: return a list of sections
 	  x = Math.max(0, Math.min(x, canvas.offsetWidth - 1));
 	  y = Math.max(0, Math.min(y, canvas.offsetHeight - 1));
 	

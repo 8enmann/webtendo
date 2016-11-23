@@ -14,6 +14,11 @@ var canvas;
 var collisionSections;
 
 class Circle {
+  x: number;
+  y: number;
+  // Radius
+  r: number;
+  
   constructor(x, y, r) {
     this.x = x;
     this.y = y;
@@ -54,6 +59,17 @@ class Star extends Circle {
 }
   
 class Player extends Circle {
+  color: string;
+  theta: number;
+  // Base 32 random ID.
+  id: string;
+  score: number;
+  speed: number;
+  // ** user inputs **
+  a: {value: string, action: string};
+  b: {value: string, action: string};
+  stick: {value: string, action: string, position: {x: number, y:number}};
+  
   constructor(id) {
     let p = getRandomPosition();
     super(p.x, p.y, 15);
@@ -126,7 +142,10 @@ class Player extends Circle {
 }
 
 class Bullet extends Circle {
-
+  vx: number;
+  vy: number;
+  // Player.id that fired this bullet.
+  owner: string;
   constructor(x, y, vx, vy, owner) {
     super(x, y, 5);
 
@@ -185,7 +204,7 @@ class Bullet extends Circle {
 }
 
 function blankCollisionSections() {
-  var sections = new Array();
+  var sections = [];
   for (var i = 0; i < numCollisionRows * numCollisionColumns; i++) {
     sections.push({
       'players': [],
@@ -222,7 +241,7 @@ function update(modifier) {
   for (var i = bullets.length - 1; i >= 0; i--) {
     bullets[i].update(modifier, i);
   }
-  Object.values(players).forEach(player => player.update(modifier));
+  Object.values(players).forEach((player: any) => player.update(modifier));
   stars.forEach(star => star.update(modifier));
 }
 
@@ -254,7 +273,7 @@ var render = function () {
 
   stars.forEach(star => star.render(ctx));
   bullets.forEach(bullet => bullet.render(ctx));
-  Object.values(players).forEach(player => player.render(ctx));
+  Object.values(players).forEach((player: any) => player.render(ctx));
 
   // Scoreboard
   ctx.fillStyle = "white";
@@ -262,7 +281,7 @@ var render = function () {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   // Wow I'm lazy.
-  ctx.fillText(JSON.stringify(Object.values(players).map(player=>`${player.color}:${player.score}`)), 0, 0);
+  ctx.fillText(JSON.stringify(Object.values(players).map((player: any) =>`${player.color}:${player.score}`)), 0, 0);
 };
 
 webtendo.callbacks.onMessageReceived = function(x) {
@@ -290,6 +309,7 @@ webtendo.callbacks.onDisconnected = function(id) {
 };
 
 function sectionForCoordinate(x, y) {
+  // TODO: return a list of sections
   x = Math.max(0, Math.min(x, canvas.offsetWidth - 1));
   y = Math.max(0, Math.min(y, canvas.offsetHeight - 1));
 
@@ -303,7 +323,7 @@ function sectionForCoordinate(x, y) {
 };
 
 (function init() {
-  canvas = document.getElementById('canvas');
+  canvas = (document.getElementById('canvas'): any);
   ctx = canvas.getContext("2d");
   // Awful hack from stackoverflow to increase canvas resolution.
   const ratio = window.devicePixelRatio, w = canvas.offsetWidth, h = canvas.offsetHeight;
