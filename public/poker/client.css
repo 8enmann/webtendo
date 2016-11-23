@@ -1,0 +1,79 @@
+body {
+  font-family: sans-serif;
+  background-color: #404040;
+  color:white;
+  margin: 0;
+  padding: 0;
+  justify-content: space-between;
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  /* align-items: center; */
+  flex-direction: column;
+  font-size: 1.5em;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+}
+
+.fullscreen {
+  position:absolute;
+  top:0;
+  right: 0;
+  width: 2em;
+  background-color:white;
+  margin: 4px;
+}
+
+button {
+    background: none;
+    border: 0;
+    color: inherit;
+    /* cursor: default; */
+    font: inherit;
+    line-height: normal;
+    overflow: visible;
+    padding: 0;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0); 
+    -webkit-tap-highlight-color: transparent;  // i.e. Nexus5/Chrome and Kindle Fire HD 7''
+    -webkit-appearance: button; /* for input */
+    -webkit-user-select: none; /* for button */
+       -moz-user-select: none;
+        -ms-user-select: none;
+}
+
+.bigbutton {
+    font-size: .5 em;
+}
+
+.button {
+    background-color: white;
+    padding: 1em;
+    font-size: 1em;
+    color: black;
+    text-align: center;
+    border-radius: 3px;
+    margin: 20px;
+}
+
+.noedit {
+    color: white;
+    background-color: #404040;
+    border: 1px solid white;
+}
+
+.label {
+    font-size:.7em;
+}
+.value {
+    font-size: 1.3em;
+}
+
+#latency {
+    position: absolute;
+    bottom: 0;
+    margin: 0px;
+    opacity: .5;
+}
