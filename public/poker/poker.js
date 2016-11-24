@@ -11,7 +11,7 @@ var currentBigBlindIndex = 0;
 var canvas;
 var columnWidth = 100;
 var rowHeight = 24;
-var yOffset = rowHeight*3;
+var yOffset = rowHeight*5;
 var xOffset = rowHeight;
 var widthList = [0.75,2,1,1,1,1,1,1,1,1];
 var revealHand = false;
@@ -30,6 +30,7 @@ class Player {
     this.folded = false;//this.fold stored in this.folded
     this.betAlready = false;
     this.hand = undefined;
+    this.finalHand = new Hand([]);
     this.id = id;
   }
 
@@ -45,6 +46,7 @@ class Player {
               ,this.committedBet
               ,this.folded?'Fold':'In'
               ,this.hand.toString()
+              ,this.finalHand.toLine()
              ]);
     //put ante type
   }
@@ -54,13 +56,18 @@ class Player {
       ||this.committedBet==this.money//you're all-in
       ||this.hand==undefined;//you never got dealt cards
   }
-  update(currentHighestBet) {
-    if (this.commit!==undefined) { // commit a bet
-      
-      this.committedBet=Math.min[this.committedBet+this.commit,this.money];//you can bet at most the amount you have
+  commitBet(additionalAmount,currentHighestBet){//this function is also used to commit little and big blinds
+      this.committedBet=Math.min(this.committedBet+additionalAmount,this.money);//you can bet at most the amount you have
       if(this.money>=currentHighestBet){//if you have enough, bid at least the minimum.
         this.committedBet = Math.max(this.committedBet,currentHighestBet);
+      }else{//if you haven't enough, you must go all in
+        this.committedBet = this.money;
       }
+  }
+  
+  update(currentHighestBet) {
+    if (this.commit!==undefined) { // commit a bet
+      this.commitBet(this.commit,currentHighestBet);
       this.betAlready = true;
       delete this.commit;//clear the commit command
     } else if (this.fold!==undefined){//fold this round
@@ -80,8 +87,12 @@ function rowText(ctx,xStart,yPosition,xIncrement,relativeWidths,textList){
 
 function update(modifier) {
   let ids = Object.keys(players);//get a list of player ids
-  currentPlayerIndex = currentPlayerIndex%ids.length;//wrap current player index
+  if(ids.length==0)
+    currentPlayerIndex=0;
+  else
+    currentPlayerIndex = currentPlayerIndex%ids.length;//wrap current player index
   let currentPlayer = players[ids[currentPlayerIndex]];
+  if(currentPlayer!==undefined)currentPlayer.commit=10;//todo: debug auto-betting
   //check the game phase
   //deal -> get new deck and deal two cards to each player
   if(stages[currentStageIndex]=='Deal'){
@@ -96,8 +107,8 @@ function update(modifier) {
     });
     //wait for more players. A bet commit advances to the next stage.
     //todo: each new player should be sent the big blind as minimum bet (to start)
-    if(currentPlayer!==undefined){//if there are any players
-      if(currentPlayer.commit){//see if the current player has committed
+    if(ids.length>1){//if there are at least two players
+      if(currentPlayer.commit!==undefined||currentPlayer.fold!==undefined){//see if the current player has committed
         currentStageIndex++;
       }
     }
@@ -108,38 +119,52 @@ function update(modifier) {
     //check if all players have bet, or folded, or have no hand
     let allPlayersDone = true;
     Object.values(players).forEach(function(player){allPlayersDone = allPlayersDone&&player.isDoneBetting(currentHighestBet)});
-    if(allPlayersDone)
+    if(allPlayersDone){
+      //set who is betting first next round
+      currentPlayerIndex=0;//todo: If it's the first betting round, big blind plus one. otherwise, big blind minus two.
       currentStageIndex++;//move to next phase
-    //todo: send the current highest bet to clients
+      Object.values(players).forEach(function(player){player.betAlready=false});//reset 'already bet' flags
+    }else{
+      //todo: send the current highest bet to clients
+      //process commit from current player
+      if(currentPlayer.commit!==undefined||currentPlayer.fold!==undefined){
+        currentPlayer.update(currentHighestBet);
+      }
+    }
     //skip a player who is all-in, or folded, or done (somehow)
     if(currentPlayer.isDoneBetting)
       currentPlayerIndex++;
-    //process commit from current player
-    if(currentPlayer.commit||currentPlayer.fold){
-      currentPlayer.update(currentHighestBet);
-      currentPlayerIndex++;
-    }
+    
   }else if(stages[currentStageIndex]=='3'||stages[currentStageIndex]=='1'){
     //reveal some cards
     let newCards = [];
     for(let i=0;i<Number(stages[currentStageIndex]);i++){
       newCards.push(deck.drawCard());
     }
-    sharedHand.addSharedCards(new Hand(newCards));
+    sharedHand = sharedHand.cloneAndCombine(new Hand(newCards));
     currentStageIndex++;//advance to next stage
   }else if(stages[currentStageIndex]=='Reveal'){
-    
-  }
-  //bet -> acquire inputs from currentPlayer, with timeout
-  //  advanced to next player to get his bet
-  //  todo: player fold status indicator
-  //  ignore players with no hand; they will be dealt in next round
-  //  betting stops when all bets equal, or no hand, or all in, or fold
-  //numeral -> add this many cards to shared hand
-  //reveal -> show only best hand, distribute the pot, and repeat if any of the pot is left (sub-pot runoff).
-  
-  for (var id in players) {
-    players[id].update(modifier);
+    //determine who has the best hand
+    let playerList = [];//prepare to sort players by hand quality
+    Object.values(players).forEach(function(player){//get each player's best possible hand
+      if(player.folded==false&&player.hand!==undefined){//you can only win if you have been dealt a hand and have not folded
+        let combinedHand = player.hand.cloneAndCombine(sharedHand);
+        let bestHand = combinedHand.getBestHand();
+        player.finalHand = bestHand;
+        playerList.push(player)}});
+    //sort the best hands
+    playerList.sort(function(a,b){
+      return b.finalHand.handValue-a.finalHand.handValue
+    });
+    //print the hand order to console
+    for(let onePlayer of playerList){
+      console.log(onePlayer.finalHand.toLine());
+    }
+    //go to next stage
+    currentStageIndex++;
+    //todo: wait a bit so people can see the result
+    //todo: distribute moneys
+    //todo: somehow display the winner
   }
 }
 
@@ -174,18 +199,18 @@ var render = function () {
   }
   rowText(ctx,xOffset,yOffset-rowHeight,columnWidth
             ,widthList
-          ,["Turn" ,"Name" ,"Score" ,"Funds","Commit" ,"Status","Hand"]);
+          ,["Turn" ,"Name" ,"Score" ,"Funds","Commit" ,"Status","Hand","Final"]);
 
   ctx.fillText("Poker", 0, 0);
   //list stages
   rowText(ctx,rowHeight*5,0,rowHeight*4,[1,1,1,1,1,1,1,1,1,1],stages);
   rowText(ctx,rowHeight*5+currentStageIndex*rowHeight*4,rowHeight,rowHeight*4,[1],["^"]);//indicate current stage
   //show shared cards
-  ctx.fillText("Shared Cards:",800,rowHeight*2);
-  ctx.fillText(sharedHand.toString(),800,rowHeight*3);
+  ctx.fillText("Shared Cards: "+sharedHand.toString(),0,rowHeight*2);
 };
 
 webtendo.callbacks.onMessageReceived = function(x) {
+  //console.log(x);
   let player = players[x.clientId];
   player[x.controlName]=x.controlValue;//expects x.commit and x.fold
   //x.commit carries a controlValue which is the next bet amount

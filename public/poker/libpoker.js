@@ -60,6 +60,10 @@ export class Hand {
     }
     return outStr;
   }
+  toLine(){
+    return this.toString()+" "+handTypes[this.handType]+" "+this.handValue;
+  }
+  
   combinations(){//performs k choose n to get all combinations
     sets = [];
     cutAway(this.cards,0,5);
@@ -154,9 +158,9 @@ export class Hand {
     }
     return true;//all cards in order, it's a straight
   }
-  addSharedCards(sharedHand){
-    let newCards = this.cards.concat(sharedHand.cards);
-    return new Hand(newCards)//hand constructor will sort the cards
+  cloneAndCombine(newHand){
+    let allCards = this.cards.concat(newHand.cards);
+    return new Hand(allCards)//hand constructor will sort the cards
   }
   //todo: join two hands, the player's and the shared hand.
 }
