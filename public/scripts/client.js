@@ -39,7 +39,7 @@ function getRegion(x, y) {
   for (var i = 0; i < regions.length; i++) {
     let region = regions[i];
     if (check(x, region.offsetLeft, region.offsetWidth) && check(y, region.offsetTop, region.offsetHeight)) {
-      return region.dataset.buttonvalue;
+      return {value: region.dataset.buttonvalue, el: region};
     }
   }
 }
@@ -52,8 +52,13 @@ function handleTouch(e) {
     // Any touches elsewhere while a finger is down on the joystick will
     // block input on the rest of the screen.
     let region = getRegion(touches[i].pageX, touches[i].pageY);
+    if (e.type === 'touchstart') {
+      region.el.style.opacity = .6;
+    } else if (e.type === 'touchend') {
+      region.el.style.opacity = 1;
+    }
     if (callbacks.onTouch) {
-      callbacks.onTouch(e, touches[i], region);
+      callbacks.onTouch(e, touches[i], region.value);
     }
     // return true;
   }
