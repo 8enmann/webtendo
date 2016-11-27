@@ -53,9 +53,16 @@
 	
 	var client = _interopRequireWildcard(_client);
 	
+	var _webtendo = __webpack_require__(/*! ../scripts/webtendo */ 2);
+	
+	var webtendo = _interopRequireWildcard(_webtendo);
+	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	var bid = 0;
+	var minimumBid = 0;
+	var name = 'Your Name Here';
+	var isMyTurn = false;
 	
 	client.callbacks.onTouch = function (e, touch, region) {
 	  // Ignore everything other than touchend
@@ -71,17 +78,21 @@
 	    return;
 	  }
 	  if (region === 'commit' || region === 'fold') {
+	    if (!isMyTurn) return;
 	    client.sendToHost({
 	      controlName: region,
 	      controlValue: bid
 	    });
+	    document.body.style.backgroundColor = '#404040';
 	    updateBid(0);
+	    isMyTurn = false;
 	    return;
 	  }
 	  if (region !== undefined) {
 	    var newBid = parseInt(region);
 	    if (newBid === 0) {
-	      updateBid(0);
+	      //see
+	      updateBid(minimumBid);
 	    } else {
 	      updateBid(newBid + bid);
 	    }
@@ -96,6 +107,31 @@
 	  }
 	  document.getElementById('bet').innerText = '$' + text;
 	}
+	
+	webtendo.callbacks.onMessageReceived = function (x) {
+	  // TODO: do something with message from host.
+	  console.log(x);
+	  if (x.minimumBid !== undefined) {
+	    //turn indicator message
+	    if (x.whoseTurn == name) {
+	      //if it's my turn
+	      minimumBid = x.minimumBid || 0;
+	      bid = minimumBid;
+	      updateBid(bid);
+	      document.body.style.backgroundColor = '#03a9f4'; //blue
+	      isMyTurn = true;
+	    } else {
+	      isMyTurn = false;
+	      document.body.style.backgroundColor = '#404040'; //gray
+	    }
+	  } else if (x.hello !== undefined) {
+	    //name sending message
+	    name = x.hello;
+	    document.getElementById('name').innerText = name;
+	  } else if (x.handText !== undefined) {
+	    document.getElementById('hand').innerText = x.handText;
+	  }
+	};
 
 /***/ },
 /* 1 */
