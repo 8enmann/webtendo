@@ -116,7 +116,7 @@
 	    if (x.whoseTurn == name) {
 	      //if it's my turn
 	      minimumBid = x.minimumBid || 0;
-	      bid = minimumBid;
+	      if (minimumBid > bid) bid = minimumBid;
 	      updateBid(bid);
 	      document.body.style.backgroundColor = '#03a9f4'; //blue
 	      isMyTurn = true;
@@ -296,7 +296,11 @@
 	var clientId = exports.clientId = undefined;
 	// Send a message to a particular client.
 	function sendToClient(recipientId, obj) {
-	  return dataChannels[recipientId].send(JSON.stringify(obj));
+	  try {
+	    return dataChannels[recipientId].send(JSON.stringify(obj));
+	  } catch (e) {
+	    console.log('couldnt send', e, e.stack);
+	  }
 	}
 	// Send a message to all clients.
 	function broadcast(obj) {

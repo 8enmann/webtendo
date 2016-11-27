@@ -279,7 +279,11 @@
 	var clientId = exports.clientId = undefined;
 	// Send a message to a particular client.
 	function sendToClient(recipientId, obj) {
-	  return dataChannels[recipientId].send(JSON.stringify(obj));
+	  try {
+	    return dataChannels[recipientId].send(JSON.stringify(obj));
+	  } catch (e) {
+	    console.log('couldnt send', e, e.stack);
+	  }
 	}
 	// Send a message to all clients.
 	function broadcast(obj) {

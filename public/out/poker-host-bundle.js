@@ -64,7 +64,7 @@
 	var then;
 	var ctx;
 	var players = {}; //dict
-	var names = ['Angalope', 'Goofball', 'Lumpy', 'Beefsteak', 'Strongarm']; //list
+	var names = ['Phillips', 'Ahaltimof', 'Fghulds', 'Argyle', 'Angalope', 'Goofball', 'Lumpy', 'Beefsteak', 'Strongarm']; //list
 	var currentPlayerIndex = 0;
 	var currentBigBlindIndex = 0;
 	var canvas;
@@ -649,7 +649,11 @@
 	var clientId = exports.clientId = undefined;
 	// Send a message to a particular client.
 	function sendToClient(recipientId, obj) {
-	  return dataChannels[recipientId].send(JSON.stringify(obj));
+	  try {
+	    return dataChannels[recipientId].send(JSON.stringify(obj));
+	  } catch (e) {
+	    console.log('couldnt send', e, e.stack);
+	  }
 	}
 	// Send a message to all clients.
 	function broadcast(obj) {

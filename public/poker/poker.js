@@ -5,7 +5,7 @@ import {Card,Hand,Deck} from './libpoker';
 var then;
 var ctx;
 var players = {};//dict
-var names = ['Angalope','Goofball','Lumpy','Beefsteak','Strongarm'];//list
+var names = ['Phillips','Ahaltimof','Fghulds','Argyle','Angalope','Goofball','Lumpy','Beefsteak','Strongarm'];//list
 var currentPlayerIndex = 0;
 var currentBigBlindIndex = 0;
 var canvas;

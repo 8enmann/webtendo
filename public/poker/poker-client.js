@@ -55,7 +55,8 @@ webtendo.callbacks.onMessageReceived = function(x) {
   if(x.minimumBid!==undefined){//turn indicator message
     if(x.whoseTurn==name){//if it's my turn
       minimumBid = x.minimumBid||0;
-      bid = minimumBid;
+      if(minimumBid>bid)
+        bid = minimumBid;
       updateBid(bid);
       document.body.style.backgroundColor = '#03a9f4';//blue
       isMyTurn = true;
