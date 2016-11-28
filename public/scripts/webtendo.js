@@ -54,7 +54,7 @@ var configuration = {
 // Create a random room if not already present in the URL.
 isHost = window.location.pathname.includes('host');
 // TODO: allow room override, maybe based on URL hash?
-var room = '';
+var room = window.location.hash;
 // Use session storage to maintain connections across refresh but allow
 // multiple tabs in the same browser for testing purposes.
 // Not to be confused with socket ID.

@@ -1,7 +1,7 @@
 # webtendo
 Nintendo is great because everyone sits in a room and plays games together, but why buy a console? Why limit to 4 players? Everyone has a phone that can turn into a controller, and at least a laptop for the main screen. Let's bring in-person multiplayer to the web!
 
-[Heroku demo](http://webtendo.herokuapp.com) (iOS browser is broken since it doesn't support browser WebRTC)
+[Heroku demo](http://webtendo.herokuapp.com) (iOS browser is broken since it doesn't support browser WebRTC, native app coming soon!)
 
 # Run
 ```bash
@@ -22,7 +22,7 @@ Visit [http://localhost:8080](http://localhost:8080) in two tabs
 - [x] Example game
 - [x] Heroku deployment
 - [x] Game selection
-- [/] Automatic/manual room determination based on external IP
+- [x] Automatic/manual room determination based on external IP
 - [ ] Native client (in progress at 8enmann/WebtendoClient)
 - [ ] autotrack.js integration
 - [ ] Game rating
