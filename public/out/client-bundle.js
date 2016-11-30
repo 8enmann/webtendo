@@ -73,7 +73,7 @@
 	var newHand = function newHand(hand) {
 	  (0, _jquery2.default)("#hand").empty();
 	  _underscore2.default.each(hand, function (letter, index) {
-	    $letter = createLetterDiv(letter, index);
+	    var $letter = createLetterDiv(letter, index);
 	    (0, _jquery2.default)("#hand").append($letter);
 	  });
 	};
@@ -131,6 +131,8 @@
 	  if (x.hand) {
 	    // new hand
 	    newHand(x.hand);
+	  } else if (x.error) {
+	    alert(x.error);
 	  }
 	};
 

@@ -219,6 +219,8 @@
 	}
 
 	function selectTile(x, y) {
+	  position.x = x;
+	  position.y = y;
 	  _underscore2.default.each((0, _jquery2.default)(".row .square"), function (e) {
 	    (0, _jquery2.default)(e).removeClass('selected');
 	  });
@@ -233,82 +235,88 @@
 	}
 
 	function resetPosition() {
-	  position = { x: 7, y: 7 };
-	  selectTile(position.x, position.y);
+	  selectTile(7, 7);
 	}
 
 	function getPossiblePositions() {
 	  if (currWordPositions.length == 0) {
-	    return null; // world is your oyster!
+	    var possiblePositions = [];
+	    for (var i = 0; i < 15; i++) {
+	      possiblePositions.push({ x: position.x, y: i });
+	      possiblePositions.push({ x: i, y: position.y });
+	    }
+	    possiblePositions = _underscore2.default.sortBy(_underscore2.default.filter(possiblePositions, function (p) {
+	      return !(p.x == position.x && p.y == position.y) && isAvailable(p.x, p.y);
+	    }), function (p) {
+	      return Math.abs(position.x - p.x) + Math.abs(position.y - p.y);
+	    });
+	    return possiblePositions;
 	  } else if (currWordPositions.length == 1) {
 	    var origin = currWordPositions[0];
-	    return [{ x: origin.x, y: origin.y + 1 }, { x: origin.x, y: origin.y - 1 }, { x: origin.x + 1, y: origin.y }, { x: origin.x - 1, y: origin.y }];
+	    return _underscore2.default.filter([{ x: origin.x, y: origin.y + 1 }, { x: origin.x, y: origin.y - 1 }, { x: origin.x + 1, y: origin.y }, { x: origin.x - 1, y: origin.y }], function (p) {
+	      return isAvailable(p.x, p.y);
+	    });
 	  } else {
-	    //figure out direction (up or down?)
+	    if (currWordPositions[0].x == currWordPositions[1].x) {
+	      // need to move up or down
+	      // get min / max of y values
+	      var possiblePositions = [{ x: currWordPositions[0].x, y: _underscore2.default.max(_underscore2.default.pluck(currWordPositions, "y")) + 1 }, { x: currWordPositions[0].x, y: _underscore2.default.min(_underscore2.default.pluck(currWordPositions, "y")) - 1 }];
+	      return _underscore2.default.filter(possiblePositions, function (p) {
+	        return p.y <= 14 && p.y >= 0 && isAvailable(p.x, p.y);
+	      });
+	    } else {
+	      assert(currWordPositions[0].y == currWordPositions[1].y);
+	      var possiblePositions = [{ x: _underscore2.default.max(_underscore2.default.pluck(currWordPositions, "x")) + 1, y: currWordPositions[0].y }, { x: _underscore2.default.min(_underscore2.default.pluck(currWordPositions, "x")) - 1, y: currWordPositions[0].y }];
+	      return _underscore2.default.filter(possiblePositions, function (p) {
+	        return p.x <= 14 && p.x >= 0 && isAvailable(p.x, p.y);
+	      });
+	    }
 	  }
 	}
 
-	function maybeMoveToPosition(x, y) {
-	  var possiblePositions = getPossiblePositions();
-	  if (_underscore2.default.isNull(possiblePositions) || _underscore2.default.some(possiblePositions, function (p) {
-	    return x == p.x && y == p.y;
-	  })) {
-	    position.x = x;
-	    position.y = y;
-	    selectTile(position.x, position.y);
-	  }
+	function isAvailable(x, y) {
+	  return _underscore2.default.isUndefined(board[x][y]);
 	}
 
 	function movePosition(direction) {
-	  if (direction == 'R') {
-	    if (position.x < 14) {
-	      var i = position.x + 1;
-	      while (_underscore2.default.find(currWordPositions, function (pos) {
-	        return pos.x == i && pos.y == position.y;
-	      }) && i <= 14) {
-	        i += 1;
-	      }
-	      if (i <= 14) {
-	        maybeMoveToPosition(i, position.y);
-	      }
-	    }
-	  } else if (direction == 'L') {
-	    if (position.x > 0) {
-	      var i = position.x - 1;
-	      while (_underscore2.default.find(currWordPositions, function (pos) {
-	        return pos.x == i && pos.y == position.y;
-	      }) && i >= 0) {
-	        i -= 1;
-	      }
-	      if (i >= 0) {
-	        console.log("move from : " + position + " to (" + i + ", " + position.y + ")");
-	        maybeMoveToPosition(i, position.y);
-	      }
-	    }
-	  } else if (direction == 'U') {
-	    if (position.y > 0) {
-	      var i = position.y - 1;
-	      while (_underscore2.default.find(currWordPositions, function (pos) {
-	        return pos.x == pos.x && pos.y == i;
-	      }) && i >= 0) {
-	        i -= 1;
-	      }
-	      if (i >= 0) {
-	        maybeMoveToPosition(position.x, i);
-	      }
-	    }
-	  } else if (direction == 'D') {
-	    if (position.y < 14) {
-	      var i = position.y + 1;
-	      while (_underscore2.default.find(currWordPositions, function (pos) {
-	        return pos.x == pos.x && pos.y == i;
-	      }) && i <= 14) {
-	        i += 1;
-	      }
-	      if (i <= 14) {
-	        maybeMoveToPosition(position.x, i);
-	      }
-	    }
+	  var possiblePositions = getPossiblePositions();
+	  var newP;
+	  switch (direction) {
+	    case 'L':
+	      // find position that's left of curr position
+	      newP = _underscore2.default.sortBy(_underscore2.default.filter(possiblePositions, function (p) {
+	        return p.x < position.x;
+	      }), function (p) {
+	        return Math.abs(p.y - position.y);
+	      });
+	      break;
+	    case 'R':
+	      var newP = _underscore2.default.sortBy(_underscore2.default.filter(possiblePositions, function (p) {
+	        return p.x > position.x;
+	      }), function (p) {
+	        return Math.abs(p.y - position.y);
+	      });
+	      break;
+	    case 'U':
+	      var newP = _underscore2.default.sortBy(_underscore2.default.filter(possiblePositions, function (p) {
+	        return p.y < position.y;
+	      }), function (p) {
+	        return Math.abs(p.x - position.x);
+	      });
+	      break;
+	    case 'D':
+	      var newP = _underscore2.default.sortBy(_underscore2.default.filter(possiblePositions, function (p) {
+	        return p.y > position.y;
+	      }), function (p) {
+	        return Math.abs(p.x - position.x);
+	      });
+	      break;
+	  }
+	  console.log(newP);
+	  if (_underscore2.default.isNull(newP) || _underscore2.default.isUndefined(newP) || newP.length < 1) {
+	    return;
+	  } else {
+	    selectTile(newP[0].x, newP[0].y);
 	  }
 	}
 
@@ -371,7 +379,7 @@
 	}
 
 	// these are the vars that store current user's turn
-	var position;
+	var position = {};
 	var lastMoveTimestamp = 0;
 	var numConsecutiveMoves;
 	var currWordPositions = []; // array of positions where characters have been placed.
