@@ -7910,7 +7910,7 @@
 	}
 	// Measure latency at 1Hz.
 	var AUTO_PING = false;
-	var VERBOSE = false;
+	var VERBOSE = true;
 	
 	/****************************************************************************
 	 * Initial setup

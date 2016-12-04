@@ -27,7 +27,7 @@ io.sockets.on('connection', function(socket) {
   var socketRoom;
   if (socket.request.headers['x-forwarded-for']) {
     clientIP = socket.request.headers['x-forwarded-for'];
-    console.log('clientIP', clientIP);
+    console.log('clientIP', clientIP, 'aka', getRoomId(clientIP));
   }
 
   // convenience function to log server messages on the client

@@ -72,7 +72,7 @@
 	
 	// Let user manually override.
 	el.addEventListener("input", function (e) {
-	  window.location.hash = e.target.value;
+	  window.location.hash = e.target.value.toLowerCase();
 	});
 	
 	// Preserve hash on navigation.
