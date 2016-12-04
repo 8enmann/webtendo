@@ -49,11 +49,11 @@
 
 	'use strict';
 	
-	var _client = __webpack_require__(/*! ../scripts/client */ 1);
+	var _client = __webpack_require__(/*! ../scripts/client */ 48);
 	
 	var client = _interopRequireWildcard(_client);
 	
-	var _webtendo = __webpack_require__(/*! ../scripts/webtendo */ 2);
+	var _webtendo = __webpack_require__(/*! ../scripts/webtendo */ 49);
 	
 	var webtendo = _interopRequireWildcard(_webtendo);
 	
@@ -138,453 +138,6 @@
 
 /***/ },
 /* 1 */
-/*!**********************************!*\
-  !*** ./public/scripts/client.js ***!
-  \**********************************/
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.sendToHost = exports.callbacks = undefined;
-	
-	var _webtendo = __webpack_require__(/*! ./webtendo */ 2);
-	
-	var webtendo = _interopRequireWildcard(_webtendo);
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	/****************************************************************************
-	 * Public interface
-	 ****************************************************************************/
-	// Called whenever body is touched. Args are event and the data-buttonvalue of
-	// elements with class touch-region, if any.
-	var callbacks = exports.callbacks = { onTouch: undefined };
-	// Convenience wrapper for sendToClient (and to avoid confusion).
-	var sendToHost = exports.sendToHost = function sendToHost(obj) {
-	  return webtendo.sendToClient(webtendo.clientId, obj);
-	};
-	
-	setTimeout(function () {
-	  try {
-	    WebViewBridge.onMessage = function (stringifiedMessage) {
-	      if (webtendo.callbacks.onMessageReceived) {
-	        webtendo.callbacks.onMessageReceived(JSON.parse(stringifiedMessage));
-	      }
-	    };
-	    exports.sendToHost = sendToHost = function sendToHost(message) {
-	      WebViewBridge.send(JSON.stringify(message));
-	    };
-	  } catch (e) {
-	    console.log(e, e.stack);
-	  }
-	}, 500);
-	
-	/****************************************************************************
-	 * Private
-	 ****************************************************************************/
-	
-	function getRegion(x, y) {
-	  var regions = document.getElementsByClassName('touch-region');
-	  var check = function check(x, left, width) {
-	    return x >= left && x <= left + width;
-	  };
-	  for (var i = 0; i < regions.length; i++) {
-	    var region = regions[i];
-	    if (check(x, region.offsetLeft, region.offsetWidth) && check(y, region.offsetTop, region.offsetHeight)) {
-	      return { value: region.dataset.buttonvalue, el: region };
-	    }
-	  }
-	}
-	
-	function handleTouch(e) {
-	  e.preventDefault();
-	  // console.log(e);
-	  var touches = e.changedTouches;
-	  for (var i = 0; i < touches.length; i++) {
-	    // Any touches elsewhere while a finger is down on the joystick will
-	    // block input on the rest of the screen.
-	    var region = getRegion(touches[i].pageX, touches[i].pageY);
-	    if (e.type === 'touchstart') {
-	      region.el.style.opacity = .6;
-	    } else if (e.type === 'touchend') {
-	      region.el.style.opacity = 1;
-	    }
-	    if (callbacks.onTouch) {
-	      callbacks.onTouch(e, touches[i], region.value);
-	    }
-	    // return true;
-	  }
-	}
-	
-	document.body.addEventListener('touchstart', handleTouch);
-	document.body.addEventListener('touchmove', handleTouch);
-	document.body.addEventListener('touchend', handleTouch);
-	
-	// Disable zoom on iOS 10.
-	document.addEventListener('gesturestart', function (e) {
-	  e.preventDefault();
-	});
-	// TODO: replace this with sindresorhus/screenfull.js
-	var fullscreenButton = document.getElementById('fullscreen');
-	if (fullscreenButton) {
-	  var fullscreen = function fullscreen(e) {
-	    document.documentElement.webkitRequestFullScreen();
-	    if (!screen.orientation.type.includes('landscape')) {
-	      screen.orientation.lock('landscape').then(function () {
-	        return console.log('switched to landscape');
-	      }, function (err) {
-	        console.error(err);
-	        window.alert('please rotate device');
-	      });
-	    }
-	  };
-	
-	  fullscreenButton.addEventListener('touchstart', fullscreen);
-	}
-	
-	webtendo.callbacks.onMessageReceived = function (x) {
-	  // TODO: do something with message from host.
-	  console.log(x);
-	};
-	
-	webtendo.callbacks.onConnected = function (id) {
-	  console.log(id, 'connected');
-	  sendToHost({ hello: 'host' });
-	};
-
-/***/ },
-/* 2 */
-/*!************************************!*\
-  !*** ./public/scripts/webtendo.js ***!
-  \************************************/
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.clientId = exports.isHost = exports.callbacks = undefined;
-	exports.sendToClient = sendToClient;
-	exports.broadcast = broadcast;
-	exports.getClients = getClients;
-	
-	var _socket = __webpack_require__(/*! socket.io-client */ 3);
-	
-	var _socket2 = _interopRequireDefault(_socket);
-	
-	__webpack_require__(/*! webrtc-adapter */ 50);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	/****************************************************************************
-	 * Public interface
-	 ****************************************************************************/
-	
-	var callbacks = exports.callbacks = {
-	  // Called when a message is received. Host can check message.clientId for sender.
-	  onMessageReceived: undefined,
-	  // Called when a data channel opens, passing clientId as argument.
-	  onConnected: undefined,
-	  // Called when a data channel closes, passing clientId as argument.
-	  onDisconnected: undefined
-	};
-	
-	// Am I the host?
-	var isHost = exports.isHost = undefined;
-	// My ID.
-	var clientId = exports.clientId = undefined;
-	// Send a message to a particular client.
-	function sendToClient(recipientId, obj) {
-	  try {
-	    return dataChannels[recipientId].send(JSON.stringify(obj));
-	  } catch (e) {
-	    console.log('couldnt send', e, e.stack);
-	  }
-	}
-	// Send a message to all clients.
-	function broadcast(obj) {
-	  return getClients().map(function (client) {
-	    return sendToClient(client, obj);
-	  });
-	}
-	// Get a list of all the clients connected.
-	function getClients() {
-	  return Object.keys(dataChannels);
-	}
-	// Measure latency at 1Hz.
-	var AUTO_PING = false;
-	var VERBOSE = false;
-	
-	/****************************************************************************
-	 * Initial setup
-	 ****************************************************************************/
-	
-	var configuration = {
-	  'iceServers': [{ 'url': 'stun:stun.l.google.com:19302' }, { 'url': 'stun:stun.services.mozilla.com' }]
-	};
-	
-	// Create a random room if not already present in the URL.
-	exports.isHost = isHost = window.location.pathname.includes('host');
-	// TODO: allow room override, maybe based on URL hash?
-	var room = window.location.hash;
-	// Use session storage to maintain connections across refresh but allow
-	// multiple tabs in the same browser for testing purposes.
-	// Not to be confused with socket ID.
-	exports.clientId = clientId = sessionStorage.getItem('clientId');
-	if (!clientId) {
-	  exports.clientId = clientId = Math.random().toString(36).substr(2, 10);
-	  sessionStorage.setItem('clientId', clientId);
-	}
-	maybeLog()('Session clientId ' + clientId);
-	
-	/****************************************************************************
-	 * Signaling server
-	 ****************************************************************************/
-	
-	// Connect to the signaling server if we have webrtc access.
-	var socket;
-	try {
-	  new RTCSessionDescription();
-	  socket = _socket2.default.connect();
-	  attachListeners(socket);
-	} catch (e) {
-	  console.log('No WebRTC detected, bailing out.');
-	  setTimeout(function () {
-	    try {
-	      WebViewBridge;
-	    } catch (e) {
-	      console.log('Dis don look like ReactNative...');
-	      alert('This browser is not supported. Please use Android Chrome or iOS native app.');
-	    }
-	  }, 500);
-	}
-	
-	function attachListeners(socket) {
-	  socket.on('ipaddr', function (ipaddr) {
-	    maybeLog()('Server IP address is: ' + ipaddr);
-	    if (isHost) {
-	      document.getElementById('ip').innerText = 'Clients connect to ' + ipaddr;
-	    }
-	  });
-	
-	  socket.on('created', function (room, hostClientId) {
-	    maybeLog()('Created room', room, '- my client ID is', clientId);
-	    if (!isHost) {
-	      // Get dangling clients to reconnect if a host stutters.
-	      peerConns = {};
-	      dataChannels = {};
-	      socket.emit('create or join', room, clientId, isHost);
-	    }
-	  });
-	
-	  socket.on('full', function (room) {
-	    //alert('Room ' + room + ' is full. We will create a new room for you.');
-	    //window.location.hash = '';
-	    //window.location.reload();
-	    maybeLog()('server thinks room is full');
-	    // TODO: remove this
-	  });
-	
-	  socket.on('joined', function (room, clientId) {
-	    maybeLog()(clientId, 'joined', room);
-	    createPeerConnection(isHost, configuration, clientId);
-	  });
-	
-	  socket.on('log', function (array) {
-	    console.log.apply(console, array);
-	  });
-	
-	  socket.on('disconnected', function (clientId) {
-	    if (callbacks.onDisconnected) {
-	      callbacks.onDisconnected(clientId);
-	    }
-	  });
-	
-	  socket.on('message', signalingMessageCallback);
-	
-	  socket.on('nohost', function (room) {
-	    return console.error('No host for', room);
-	  });
-	
-	  // Join a room
-	  socket.emit('create or join', room, clientId, isHost);
-	
-	  if (location.hostname.match(/localhost|127\.0\.0/)) {
-	    socket.emit('ipaddr');
-	  }
-	}
-	
-	/**
-	 * Send message to signaling server
-	 */
-	function sendMessage(message, recipient) {
-	  var payload = {
-	    recipient: recipient,
-	    sender: clientId,
-	    rtcSessionDescription: message
-	  };
-	  maybeLog()('Client sending message: ', payload);
-	  socket.emit('message', payload);
-	}
-	
-	/****************************************************************************
-	 * WebRTC peer connection and data channel
-	 ****************************************************************************/
-	
-	// Map from clientId to RTCPeerConnection. 
-	// For clients this will have only the host.
-	var peerConns = {};
-	// dataChannel.label is the clientId of the recipient. useful in onmessage.
-	var dataChannels = {};
-	
-	function signalingMessageCallback(message) {
-	  maybeLog()('Client received message:', message);
-	  var peerConn = peerConns[isHost ? message.sender : clientId];
-	  // TODO: if got an offer and isHost, ignore?
-	  if (message.rtcSessionDescription.type === 'offer') {
-	    maybeLog()('Got offer. Sending answer to peer.');
-	    peerConn.setRemoteDescription(new RTCSessionDescription(message.rtcSessionDescription), function () {}, logError);
-	    peerConn.createAnswer(onLocalSessionCreated(message.sender), logError);
-	  } else if (message.rtcSessionDescription.type === 'answer') {
-	    maybeLog()('Got answer.');
-	    peerConn.setRemoteDescription(new RTCSessionDescription(message.rtcSessionDescription), function () {}, logError);
-	  } else if (message.rtcSessionDescription.type === 'candidate') {
-	
-	    peerConn.addIceCandidate(new RTCIceCandidate({
-	      candidate: message.rtcSessionDescription.candidate
-	    }));
-	  } else if (message === 'bye') {
-	    // TODO: cleanup RTC connection?
-	  }
-	}
-	
-	// clientId: who to connect to?
-	// isHost: Am I the initiator?
-	// config: for RTCPeerConnection, contains STUN/TURN servers.
-	function createPeerConnection(isHost, config, recipientClientId) {
-	  maybeLog()('Creating Peer connection. isHost?', isHost, 'recipient', recipientClientId, 'config:', config);
-	  peerConns[recipientClientId] = new RTCPeerConnection(config);
-	
-	  // send any ice candidates to the other peer
-	  peerConns[recipientClientId].onicecandidate = function (event) {
-	    maybeLog()('icecandidate event:', event);
-	    if (event.candidate) {
-	      sendMessage({
-	        type: 'candidate',
-	        label: event.candidate.sdpMLineIndex,
-	        id: event.candidate.sdpMid,
-	        candidate: event.candidate.candidate
-	      }, recipientClientId);
-	    } else {
-	      maybeLog()('End of candidates.');
-	    }
-	  };
-	
-	  if (isHost) {
-	    maybeLog()('Creating Data Channel');
-	    dataChannels[recipientClientId] = peerConns[recipientClientId].createDataChannel(recipientClientId);
-	    onDataChannelCreated(dataChannels[recipientClientId]);
-	
-	    maybeLog()('Creating an offer');
-	    peerConns[recipientClientId].createOffer(onLocalSessionCreated(recipientClientId), logError);
-	  } else {
-	    peerConns[recipientClientId].ondatachannel = function (event) {
-	      maybeLog()('ondatachannel:', event.channel);
-	      dataChannels[recipientClientId] = event.channel;
-	      onDataChannelCreated(dataChannels[recipientClientId]);
-	    };
-	  }
-	}
-	
-	function onLocalSessionCreated(recipientClientId) {
-	  return function (desc) {
-	    var peerConn = peerConns[isHost ? recipientClientId : clientId];
-	    maybeLog()('local session created:', desc);
-	    peerConn.setLocalDescription(desc, function () {
-	      maybeLog()('sending local desc:', peerConn.localDescription);
-	      sendMessage(peerConn.localDescription, recipientClientId);
-	    }, logError);
-	  };
-	}
-	
-	function onDataChannelCreated(channel) {
-	  maybeLog()('onDataChannelCreated:', channel);
-	
-	  channel.onclose = function () {
-	    if (callbacks.onDisconnected) {
-	      callbacks.onDisconnected(channel.label);
-	    }
-	  };
-	  channel.onopen = function () {
-	    if (callbacks.onConnected) {
-	      callbacks.onConnected(channel.label);
-	    }
-	    if (AUTO_PING) {
-	      // As long as the channel is open, send a message 1/sec to
-	      // measure latency and verify everything works
-	      var cancel = window.setInterval(function () {
-	        try {
-	          channel.send(JSON.stringify({
-	            action: 'echo',
-	            time: performance.now()
-	          }));
-	        } catch (e) {
-	          console.error(e);
-	
-	          window.clearInterval(cancel);
-	        }
-	      }, 1000);
-	    } else {
-	      document.getElementById('latency').innerText = 'Connected';
-	    }
-	  };
-	
-	  channel.onmessage = function (event) {
-	    // maybeLog()(event);
-	    var x = JSON.parse(event.data);
-	    if (x.action === 'echo') {
-	      x.action = 'lag';
-	      channel.send(JSON.stringify(x));
-	    } else if (x.action == 'text') {
-	      maybeLog()(x.data);
-	    } else if (x.action == 'lag') {
-	      var str = 'round trip latency ' + (performance.now() - x.time).toFixed(2) + ' ms';
-	      // maybeLog()(str);
-	      document.getElementById('latency').innerText = str;
-	    } else if (callbacks.onMessageReceived) {
-	      x.clientId = channel.label;
-	      callbacks.onMessageReceived(x);
-	    } else {
-	      maybeLog()('unknown action');
-	    }
-	  };
-	}
-	
-	/****************************************************************************
-	 * Aux functions
-	 ****************************************************************************/
-	
-	function randomToken() {
-	  return Math.floor((1 + Math.random()) * 1e16).toString(16).substring(1);
-	}
-	
-	function logError(err) {
-	  console.log(err.toString(), err);
-	}
-	
-	function maybeLog() {
-	  if (VERBOSE) {
-	    return console.log;
-	  }
-	  return function () {};
-	}
-
-/***/ },
-/* 3 */
 /*!*****************************************!*\
   !*** ./~/socket.io-client/lib/index.js ***!
   \*****************************************/
@@ -598,10 +151,10 @@
 	 * Module dependencies.
 	 */
 	
-	var url = __webpack_require__(/*! ./url */ 4);
-	var parser = __webpack_require__(/*! socket.io-parser */ 9);
-	var Manager = __webpack_require__(/*! ./manager */ 17);
-	var debug = __webpack_require__(/*! debug */ 6)('socket.io-client');
+	var url = __webpack_require__(/*! ./url */ 2);
+	var parser = __webpack_require__(/*! socket.io-parser */ 7);
+	var Manager = __webpack_require__(/*! ./manager */ 15);
+	var debug = __webpack_require__(/*! debug */ 4)('socket.io-client');
 	
 	/**
 	 * Module exports.
@@ -699,11 +252,11 @@
 	 * @api public
 	 */
 	
-	exports.Manager = __webpack_require__(/*! ./manager */ 17);
-	exports.Socket = __webpack_require__(/*! ./socket */ 43);
+	exports.Manager = __webpack_require__(/*! ./manager */ 15);
+	exports.Socket = __webpack_require__(/*! ./socket */ 41);
 
 /***/ },
-/* 4 */
+/* 2 */
 /*!***************************************!*\
   !*** ./~/socket.io-client/lib/url.js ***!
   \***************************************/
@@ -715,8 +268,8 @@
 	 * Module dependencies.
 	 */
 	
-	var parseuri = __webpack_require__(/*! parseuri */ 5);
-	var debug = __webpack_require__(/*! debug */ 6)('socket.io-client:url');
+	var parseuri = __webpack_require__(/*! parseuri */ 3);
+	var debug = __webpack_require__(/*! debug */ 4)('socket.io-client:url');
 	
 	/**
 	 * Module exports.
@@ -788,7 +341,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 5 */
+/* 3 */
 /*!*****************************!*\
   !*** ./~/parseuri/index.js ***!
   \*****************************/
@@ -835,7 +388,7 @@
 	};
 
 /***/ },
-/* 6 */
+/* 4 */
 /*!****************************!*\
   !*** ./~/debug/browser.js ***!
   \****************************/
@@ -851,7 +404,7 @@
 	 * Expose `debug()` as the module.
 	 */
 	
-	exports = module.exports = __webpack_require__(/*! ./debug */ 7);
+	exports = module.exports = __webpack_require__(/*! ./debug */ 5);
 	exports.log = log;
 	exports.formatArgs = formatArgs;
 	exports.save = save;
@@ -996,7 +549,7 @@
 	}
 
 /***/ },
-/* 7 */
+/* 5 */
 /*!**************************!*\
   !*** ./~/debug/debug.js ***!
   \**************************/
@@ -1016,7 +569,7 @@
 	exports.disable = disable;
 	exports.enable = enable;
 	exports.enabled = enabled;
-	exports.humanize = __webpack_require__(/*! ms */ 8);
+	exports.humanize = __webpack_require__(/*! ms */ 6);
 	
 	/**
 	 * The currently active debug mode names, and names to skip.
@@ -1201,7 +754,7 @@
 	}
 
 /***/ },
-/* 8 */
+/* 6 */
 /*!***********************!*\
   !*** ./~/ms/index.js ***!
   \***********************/
@@ -1330,7 +883,7 @@
 	}
 
 /***/ },
-/* 9 */
+/* 7 */
 /*!*************************************!*\
   !*** ./~/socket.io-parser/index.js ***!
   \*************************************/
@@ -1342,11 +895,11 @@
 	 * Module dependencies.
 	 */
 	
-	var debug = __webpack_require__(/*! debug */ 6)('socket.io-parser');
-	var json = __webpack_require__(/*! json3 */ 10);
-	var Emitter = __webpack_require__(/*! component-emitter */ 13);
-	var binary = __webpack_require__(/*! ./binary */ 14);
-	var isBuf = __webpack_require__(/*! ./is-buffer */ 16);
+	var debug = __webpack_require__(/*! debug */ 4)('socket.io-parser');
+	var json = __webpack_require__(/*! json3 */ 8);
+	var Emitter = __webpack_require__(/*! component-emitter */ 11);
+	var binary = __webpack_require__(/*! ./binary */ 12);
+	var isBuf = __webpack_require__(/*! ./is-buffer */ 14);
 	
 	/**
 	 * Protocol version.
@@ -1737,7 +1290,7 @@
 	}
 
 /***/ },
-/* 10 */
+/* 8 */
 /*!*************************************************!*\
   !*** ./~/socket.io-parser/~/json3/lib/json3.js ***!
   \*************************************************/
@@ -1751,7 +1304,7 @@
 	;(function () {
 	  // Detect the `define` function exposed by asynchronous module loaders. The
 	  // strict `define` check is necessary for compatibility with `r.js`.
-	  var isLoader = "function" === "function" && __webpack_require__(/*! !webpack amd options */ 12);
+	  var isLoader = "function" === "function" && __webpack_require__(/*! !webpack amd options */ 10);
 	
 	  // A set of types used to distinguish objects from primitives.
 	  var objectTypes = {
@@ -2670,10 +2223,10 @@
 	    }.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	  }
 	}).call(undefined);
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../../../../webpack/buildin/module.js */ 11)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../../../../webpack/buildin/module.js */ 9)(module), (function() { return this; }())))
 
 /***/ },
-/* 11 */
+/* 9 */
 /*!***********************************!*\
   !*** (webpack)/buildin/module.js ***!
   \***********************************/
@@ -2693,7 +2246,7 @@
 	};
 
 /***/ },
-/* 12 */
+/* 10 */
 /*!****************************************!*\
   !*** (webpack)/buildin/amd-options.js ***!
   \****************************************/
@@ -2704,7 +2257,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, {}))
 
 /***/ },
-/* 13 */
+/* 11 */
 /*!**************************************!*\
   !*** ./~/component-emitter/index.js ***!
   \**************************************/
@@ -2872,7 +2425,7 @@
 	};
 
 /***/ },
-/* 14 */
+/* 12 */
 /*!**************************************!*\
   !*** ./~/socket.io-parser/binary.js ***!
   \**************************************/
@@ -2888,8 +2441,8 @@
 	 * Module requirements
 	 */
 	
-	var isArray = __webpack_require__(/*! isarray */ 15);
-	var isBuf = __webpack_require__(/*! ./is-buffer */ 16);
+	var isArray = __webpack_require__(/*! isarray */ 13);
+	var isBuf = __webpack_require__(/*! ./is-buffer */ 14);
 	
 	/**
 	 * Replaces every Buffer | ArrayBuffer in packet with a numbered placeholder.
@@ -3027,7 +2580,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 15 */
+/* 13 */
 /*!****************************!*\
   !*** ./~/isarray/index.js ***!
   \****************************/
@@ -3040,7 +2593,7 @@
 	};
 
 /***/ },
-/* 16 */
+/* 14 */
 /*!*****************************************!*\
   !*** ./~/socket.io-parser/is-buffer.js ***!
   \*****************************************/
@@ -3062,7 +2615,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 17 */
+/* 15 */
 /*!*******************************************!*\
   !*** ./~/socket.io-client/lib/manager.js ***!
   \*******************************************/
@@ -3076,15 +2629,15 @@
 	 * Module dependencies.
 	 */
 	
-	var eio = __webpack_require__(/*! engine.io-client */ 18);
-	var Socket = __webpack_require__(/*! ./socket */ 43);
-	var Emitter = __webpack_require__(/*! component-emitter */ 44);
-	var parser = __webpack_require__(/*! socket.io-parser */ 9);
-	var on = __webpack_require__(/*! ./on */ 46);
-	var bind = __webpack_require__(/*! component-bind */ 47);
-	var debug = __webpack_require__(/*! debug */ 6)('socket.io-client:manager');
-	var indexOf = __webpack_require__(/*! indexof */ 41);
-	var Backoff = __webpack_require__(/*! backo2 */ 49);
+	var eio = __webpack_require__(/*! engine.io-client */ 16);
+	var Socket = __webpack_require__(/*! ./socket */ 41);
+	var Emitter = __webpack_require__(/*! component-emitter */ 42);
+	var parser = __webpack_require__(/*! socket.io-parser */ 7);
+	var on = __webpack_require__(/*! ./on */ 44);
+	var bind = __webpack_require__(/*! component-bind */ 45);
+	var debug = __webpack_require__(/*! debug */ 4)('socket.io-client:manager');
+	var indexOf = __webpack_require__(/*! indexof */ 39);
+	var Backoff = __webpack_require__(/*! backo2 */ 47);
 	
 	/**
 	 * IE6+ hasOwnProperty
@@ -3632,7 +3185,7 @@
 	};
 
 /***/ },
-/* 18 */
+/* 16 */
 /*!*************************************!*\
   !*** ./~/engine.io-client/index.js ***!
   \*************************************/
@@ -3640,10 +3193,10 @@
 
 	'use strict';
 	
-	module.exports = __webpack_require__(/*! ./lib/index */ 19);
+	module.exports = __webpack_require__(/*! ./lib/index */ 17);
 
 /***/ },
-/* 19 */
+/* 17 */
 /*!*****************************************!*\
   !*** ./~/engine.io-client/lib/index.js ***!
   \*****************************************/
@@ -3651,7 +3204,7 @@
 
 	'use strict';
 	
-	module.exports = __webpack_require__(/*! ./socket */ 20);
+	module.exports = __webpack_require__(/*! ./socket */ 18);
 	
 	/**
 	 * Exports parser
@@ -3659,10 +3212,10 @@
 	 * @api public
 	 *
 	 */
-	module.exports.parser = __webpack_require__(/*! engine.io-parser */ 27);
+	module.exports.parser = __webpack_require__(/*! engine.io-parser */ 25);
 
 /***/ },
-/* 20 */
+/* 18 */
 /*!******************************************!*\
   !*** ./~/engine.io-client/lib/socket.js ***!
   \******************************************/
@@ -3676,14 +3229,14 @@
 	 * Module dependencies.
 	 */
 	
-	var transports = __webpack_require__(/*! ./transports/index */ 21);
-	var Emitter = __webpack_require__(/*! component-emitter */ 13);
-	var debug = __webpack_require__(/*! debug */ 6)('engine.io-client:socket');
-	var index = __webpack_require__(/*! indexof */ 41);
-	var parser = __webpack_require__(/*! engine.io-parser */ 27);
-	var parseuri = __webpack_require__(/*! parseuri */ 5);
-	var parsejson = __webpack_require__(/*! parsejson */ 42);
-	var parseqs = __webpack_require__(/*! parseqs */ 35);
+	var transports = __webpack_require__(/*! ./transports/index */ 19);
+	var Emitter = __webpack_require__(/*! component-emitter */ 11);
+	var debug = __webpack_require__(/*! debug */ 4)('engine.io-client:socket');
+	var index = __webpack_require__(/*! indexof */ 39);
+	var parser = __webpack_require__(/*! engine.io-parser */ 25);
+	var parseuri = __webpack_require__(/*! parseuri */ 3);
+	var parsejson = __webpack_require__(/*! parsejson */ 40);
+	var parseqs = __webpack_require__(/*! parseqs */ 33);
 	
 	/**
 	 * Module exports.
@@ -3806,9 +3359,9 @@
 	 */
 	
 	Socket.Socket = Socket;
-	Socket.Transport = __webpack_require__(/*! ./transport */ 26);
-	Socket.transports = __webpack_require__(/*! ./transports/index */ 21);
-	Socket.parser = __webpack_require__(/*! engine.io-parser */ 27);
+	Socket.Transport = __webpack_require__(/*! ./transport */ 24);
+	Socket.transports = __webpack_require__(/*! ./transports/index */ 19);
+	Socket.parser = __webpack_require__(/*! engine.io-parser */ 25);
 	
 	/**
 	 * Creates transport of the given type.
@@ -4395,7 +3948,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 21 */
+/* 19 */
 /*!****************************************************!*\
   !*** ./~/engine.io-client/lib/transports/index.js ***!
   \****************************************************/
@@ -4407,10 +3960,10 @@
 	 * Module dependencies
 	 */
 	
-	var XMLHttpRequest = __webpack_require__(/*! xmlhttprequest-ssl */ 22);
-	var XHR = __webpack_require__(/*! ./polling-xhr */ 24);
-	var JSONP = __webpack_require__(/*! ./polling-jsonp */ 38);
-	var websocket = __webpack_require__(/*! ./websocket */ 39);
+	var XMLHttpRequest = __webpack_require__(/*! xmlhttprequest-ssl */ 20);
+	var XHR = __webpack_require__(/*! ./polling-xhr */ 22);
+	var JSONP = __webpack_require__(/*! ./polling-jsonp */ 36);
+	var websocket = __webpack_require__(/*! ./websocket */ 37);
 	
 	/**
 	 * Export transports.
@@ -4459,7 +4012,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 22 */
+/* 20 */
 /*!**************************************************!*\
   !*** ./~/engine.io-client/lib/xmlhttprequest.js ***!
   \**************************************************/
@@ -4469,7 +4022,7 @@
 	
 	// browser shim for xmlhttprequest module
 	
-	var hasCORS = __webpack_require__(/*! has-cors */ 23);
+	var hasCORS = __webpack_require__(/*! has-cors */ 21);
 	
 	module.exports = function (opts) {
 	  var xdomain = opts.xdomain;
@@ -4507,7 +4060,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 23 */
+/* 21 */
 /*!*****************************!*\
   !*** ./~/has-cors/index.js ***!
   \*****************************/
@@ -4532,7 +4085,7 @@
 	}
 
 /***/ },
-/* 24 */
+/* 22 */
 /*!**********************************************************!*\
   !*** ./~/engine.io-client/lib/transports/polling-xhr.js ***!
   \**********************************************************/
@@ -4544,11 +4097,11 @@
 	 * Module requirements.
 	 */
 	
-	var XMLHttpRequest = __webpack_require__(/*! xmlhttprequest-ssl */ 22);
-	var Polling = __webpack_require__(/*! ./polling */ 25);
-	var Emitter = __webpack_require__(/*! component-emitter */ 13);
-	var inherit = __webpack_require__(/*! component-inherit */ 36);
-	var debug = __webpack_require__(/*! debug */ 6)('engine.io-client:polling-xhr');
+	var XMLHttpRequest = __webpack_require__(/*! xmlhttprequest-ssl */ 20);
+	var Polling = __webpack_require__(/*! ./polling */ 23);
+	var Emitter = __webpack_require__(/*! component-emitter */ 11);
+	var inherit = __webpack_require__(/*! component-inherit */ 34);
+	var debug = __webpack_require__(/*! debug */ 4)('engine.io-client:polling-xhr');
 	
 	/**
 	 * Module exports.
@@ -4959,7 +4512,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 25 */
+/* 23 */
 /*!******************************************************!*\
   !*** ./~/engine.io-client/lib/transports/polling.js ***!
   \******************************************************/
@@ -4971,12 +4524,12 @@
 	 * Module dependencies.
 	 */
 	
-	var Transport = __webpack_require__(/*! ../transport */ 26);
-	var parseqs = __webpack_require__(/*! parseqs */ 35);
-	var parser = __webpack_require__(/*! engine.io-parser */ 27);
-	var inherit = __webpack_require__(/*! component-inherit */ 36);
-	var yeast = __webpack_require__(/*! yeast */ 37);
-	var debug = __webpack_require__(/*! debug */ 6)('engine.io-client:polling');
+	var Transport = __webpack_require__(/*! ../transport */ 24);
+	var parseqs = __webpack_require__(/*! parseqs */ 33);
+	var parser = __webpack_require__(/*! engine.io-parser */ 25);
+	var inherit = __webpack_require__(/*! component-inherit */ 34);
+	var yeast = __webpack_require__(/*! yeast */ 35);
+	var debug = __webpack_require__(/*! debug */ 4)('engine.io-client:polling');
 	
 	/**
 	 * Module exports.
@@ -4989,7 +4542,7 @@
 	 */
 	
 	var hasXHR2 = function () {
-	  var XMLHttpRequest = __webpack_require__(/*! xmlhttprequest-ssl */ 22);
+	  var XMLHttpRequest = __webpack_require__(/*! xmlhttprequest-ssl */ 20);
 	  var xhr = new XMLHttpRequest({ xdomain: false });
 	  return null != xhr.responseType;
 	}();
@@ -5213,7 +4766,7 @@
 	};
 
 /***/ },
-/* 26 */
+/* 24 */
 /*!*********************************************!*\
   !*** ./~/engine.io-client/lib/transport.js ***!
   \*********************************************/
@@ -5225,8 +4778,8 @@
 	 * Module dependencies.
 	 */
 	
-	var parser = __webpack_require__(/*! engine.io-parser */ 27);
-	var Emitter = __webpack_require__(/*! component-emitter */ 13);
+	var parser = __webpack_require__(/*! engine.io-parser */ 25);
+	var Emitter = __webpack_require__(/*! component-emitter */ 11);
 	
 	/**
 	 * Module exports.
@@ -5378,7 +4931,7 @@
 	};
 
 /***/ },
-/* 27 */
+/* 25 */
 /*!*******************************************!*\
   !*** ./~/engine.io-parser/lib/browser.js ***!
   \*******************************************/
@@ -5390,15 +4943,15 @@
 	 * Module dependencies.
 	 */
 	
-	var keys = __webpack_require__(/*! ./keys */ 28);
-	var hasBinary = __webpack_require__(/*! has-binary */ 29);
-	var sliceBuffer = __webpack_require__(/*! arraybuffer.slice */ 30);
-	var after = __webpack_require__(/*! after */ 31);
-	var utf8 = __webpack_require__(/*! wtf-8 */ 32);
+	var keys = __webpack_require__(/*! ./keys */ 26);
+	var hasBinary = __webpack_require__(/*! has-binary */ 27);
+	var sliceBuffer = __webpack_require__(/*! arraybuffer.slice */ 28);
+	var after = __webpack_require__(/*! after */ 29);
+	var utf8 = __webpack_require__(/*! wtf-8 */ 30);
 	
 	var base64encoder;
 	if (global && global.ArrayBuffer) {
-	  base64encoder = __webpack_require__(/*! base64-arraybuffer */ 33);
+	  base64encoder = __webpack_require__(/*! base64-arraybuffer */ 31);
 	}
 	
 	/**
@@ -5456,7 +5009,7 @@
 	 * Create a blob api even for blob builder when vendor prefixes exist
 	 */
 	
-	var Blob = __webpack_require__(/*! blob */ 34);
+	var Blob = __webpack_require__(/*! blob */ 32);
 	
 	/**
 	 * Encodes a packet.
@@ -5995,7 +5548,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 28 */
+/* 26 */
 /*!****************************************!*\
   !*** ./~/engine.io-parser/lib/keys.js ***!
   \****************************************/
@@ -6023,7 +5576,7 @@
 	};
 
 /***/ },
-/* 29 */
+/* 27 */
 /*!**************************************************!*\
   !*** ./~/engine.io-parser/~/has-binary/index.js ***!
   \**************************************************/
@@ -6037,7 +5590,7 @@
 	 * Module requirements.
 	 */
 	
-	var isArray = __webpack_require__(/*! isarray */ 15);
+	var isArray = __webpack_require__(/*! isarray */ 13);
 	
 	/**
 	 * Module exports.
@@ -6089,7 +5642,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 30 */
+/* 28 */
 /*!**************************************!*\
   !*** ./~/arraybuffer.slice/index.js ***!
   \**************************************/
@@ -6136,7 +5689,7 @@
 	};
 
 /***/ },
-/* 31 */
+/* 29 */
 /*!**************************!*\
   !*** ./~/after/index.js ***!
   \**************************/
@@ -6174,7 +5727,7 @@
 	function noop() {}
 
 /***/ },
-/* 32 */
+/* 30 */
 /*!**************************!*\
   !*** ./~/wtf-8/wtf-8.js ***!
   \**************************/
@@ -6396,7 +5949,7 @@
 	
 		// Some AMD build optimizers, like r.js, check for specific condition patterns
 		// like the following:
-		if ("function" == 'function' && _typeof(__webpack_require__(/*! !webpack amd options */ 12)) == 'object' && __webpack_require__(/*! !webpack amd options */ 12)) {
+		if ("function" == 'function' && _typeof(__webpack_require__(/*! !webpack amd options */ 10)) == 'object' && __webpack_require__(/*! !webpack amd options */ 10)) {
 			!(__WEBPACK_AMD_DEFINE_RESULT__ = function () {
 				return wtf8;
 			}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -6417,10 +5970,10 @@
 			root.wtf8 = wtf8;
 		}
 	})(undefined);
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../webpack/buildin/module.js */ 11)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../webpack/buildin/module.js */ 9)(module), (function() { return this; }())))
 
 /***/ },
-/* 33 */
+/* 31 */
 /*!********************************************************!*\
   !*** ./~/base64-arraybuffer/lib/base64-arraybuffer.js ***!
   \********************************************************/
@@ -6504,7 +6057,7 @@
 	})();
 
 /***/ },
-/* 34 */
+/* 32 */
 /*!*************************!*\
   !*** ./~/blob/index.js ***!
   \*************************/
@@ -6606,7 +6159,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 35 */
+/* 33 */
 /*!****************************!*\
   !*** ./~/parseqs/index.js ***!
   \****************************/
@@ -6653,7 +6206,7 @@
 	};
 
 /***/ },
-/* 36 */
+/* 34 */
 /*!**************************************!*\
   !*** ./~/component-inherit/index.js ***!
   \**************************************/
@@ -6669,7 +6222,7 @@
 	};
 
 /***/ },
-/* 37 */
+/* 35 */
 /*!**************************!*\
   !*** ./~/yeast/index.js ***!
   \**************************/
@@ -6745,7 +6298,7 @@
 	module.exports = yeast;
 
 /***/ },
-/* 38 */
+/* 36 */
 /*!************************************************************!*\
   !*** ./~/engine.io-client/lib/transports/polling-jsonp.js ***!
   \************************************************************/
@@ -6757,8 +6310,8 @@
 	 * Module requirements.
 	 */
 	
-	var Polling = __webpack_require__(/*! ./polling */ 25);
-	var inherit = __webpack_require__(/*! component-inherit */ 36);
+	var Polling = __webpack_require__(/*! ./polling */ 23);
+	var inherit = __webpack_require__(/*! component-inherit */ 34);
 	
 	/**
 	 * Module exports.
@@ -6986,7 +6539,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 39 */
+/* 37 */
 /*!********************************************************!*\
   !*** ./~/engine.io-client/lib/transports/websocket.js ***!
   \********************************************************/
@@ -6998,12 +6551,12 @@
 	 * Module dependencies.
 	 */
 	
-	var Transport = __webpack_require__(/*! ../transport */ 26);
-	var parser = __webpack_require__(/*! engine.io-parser */ 27);
-	var parseqs = __webpack_require__(/*! parseqs */ 35);
-	var inherit = __webpack_require__(/*! component-inherit */ 36);
-	var yeast = __webpack_require__(/*! yeast */ 37);
-	var debug = __webpack_require__(/*! debug */ 6)('engine.io-client:websocket');
+	var Transport = __webpack_require__(/*! ../transport */ 24);
+	var parser = __webpack_require__(/*! engine.io-parser */ 25);
+	var parseqs = __webpack_require__(/*! parseqs */ 33);
+	var inherit = __webpack_require__(/*! component-inherit */ 34);
+	var yeast = __webpack_require__(/*! yeast */ 35);
+	var debug = __webpack_require__(/*! debug */ 4)('engine.io-client:websocket');
 	var BrowserWebSocket = global.WebSocket || global.MozWebSocket;
 	
 	/**
@@ -7015,7 +6568,7 @@
 	var WebSocket = BrowserWebSocket;
 	if (!WebSocket && typeof window === 'undefined') {
 	  try {
-	    WebSocket = __webpack_require__(/*! ws */ 40);
+	    WebSocket = __webpack_require__(/*! ws */ 38);
 	  } catch (e) {}
 	}
 	
@@ -7270,7 +6823,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 40 */
+/* 38 */
 /*!********************!*\
   !*** ws (ignored) ***!
   \********************/
@@ -7279,7 +6832,7 @@
 	/* (ignored) */
 
 /***/ },
-/* 41 */
+/* 39 */
 /*!****************************!*\
   !*** ./~/indexof/index.js ***!
   \****************************/
@@ -7298,7 +6851,7 @@
 	};
 
 /***/ },
-/* 42 */
+/* 40 */
 /*!******************************!*\
   !*** ./~/parsejson/index.js ***!
   \******************************/
@@ -7339,7 +6892,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 43 */
+/* 41 */
 /*!******************************************!*\
   !*** ./~/socket.io-client/lib/socket.js ***!
   \******************************************/
@@ -7351,13 +6904,13 @@
 	 * Module dependencies.
 	 */
 	
-	var parser = __webpack_require__(/*! socket.io-parser */ 9);
-	var Emitter = __webpack_require__(/*! component-emitter */ 44);
-	var toArray = __webpack_require__(/*! to-array */ 45);
-	var on = __webpack_require__(/*! ./on */ 46);
-	var bind = __webpack_require__(/*! component-bind */ 47);
-	var debug = __webpack_require__(/*! debug */ 6)('socket.io-client:socket');
-	var hasBin = __webpack_require__(/*! has-binary */ 48);
+	var parser = __webpack_require__(/*! socket.io-parser */ 7);
+	var Emitter = __webpack_require__(/*! component-emitter */ 42);
+	var toArray = __webpack_require__(/*! to-array */ 43);
+	var on = __webpack_require__(/*! ./on */ 44);
+	var bind = __webpack_require__(/*! component-bind */ 45);
+	var debug = __webpack_require__(/*! debug */ 4)('socket.io-client:socket');
+	var hasBin = __webpack_require__(/*! has-binary */ 46);
 	
 	/**
 	 * Module exports.
@@ -7763,7 +7316,7 @@
 	};
 
 /***/ },
-/* 44 */
+/* 42 */
 /*!*********************************************************!*\
   !*** ./~/socket.io-client/~/component-emitter/index.js ***!
   \*********************************************************/
@@ -7928,7 +7481,7 @@
 	};
 
 /***/ },
-/* 45 */
+/* 43 */
 /*!*****************************!*\
   !*** ./~/to-array/index.js ***!
   \*****************************/
@@ -7951,7 +7504,7 @@
 	}
 
 /***/ },
-/* 46 */
+/* 44 */
 /*!**************************************!*\
   !*** ./~/socket.io-client/lib/on.js ***!
   \**************************************/
@@ -7984,7 +7537,7 @@
 	}
 
 /***/ },
-/* 47 */
+/* 45 */
 /*!***********************************!*\
   !*** ./~/component-bind/index.js ***!
   \***********************************/
@@ -8017,7 +7570,7 @@
 	};
 
 /***/ },
-/* 48 */
+/* 46 */
 /*!*******************************!*\
   !*** ./~/has-binary/index.js ***!
   \*******************************/
@@ -8031,7 +7584,7 @@
 	 * Module requirements.
 	 */
 	
-	var isArray = __webpack_require__(/*! isarray */ 15);
+	var isArray = __webpack_require__(/*! isarray */ 13);
 	
 	/**
 	 * Module exports.
@@ -8084,7 +7637,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 49 */
+/* 47 */
 /*!***************************!*\
   !*** ./~/backo2/index.js ***!
   \***************************/
@@ -8175,6 +7728,449 @@
 	Backoff.prototype.setJitter = function (jitter) {
 	  this.jitter = jitter;
 	};
+
+/***/ },
+/* 48 */
+/*!**********************************!*\
+  !*** ./public/scripts/client.js ***!
+  \**********************************/
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.sendToHost = exports.callbacks = undefined;
+	
+	var _webtendo = __webpack_require__(/*! ./webtendo */ 49);
+	
+	var webtendo = _interopRequireWildcard(_webtendo);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	/****************************************************************************
+	 * Public interface
+	 ****************************************************************************/
+	// Called whenever body is touched. Args are event and the data-buttonvalue of
+	// elements with class touch-region, if any.
+	var callbacks = exports.callbacks = { onTouch: undefined };
+	// Convenience wrapper for sendToClient (and to avoid confusion).
+	var sendToHost = exports.sendToHost = function sendToHost(obj) {
+	  return webtendo.sendToClient(webtendo.clientId, obj);
+	};
+	
+	setTimeout(function () {
+	  try {
+	    WebViewBridge.onMessage = function (stringifiedMessage) {
+	      if (webtendo.callbacks.onMessageReceived) {
+	        webtendo.callbacks.onMessageReceived(JSON.parse(stringifiedMessage));
+	      }
+	    };
+	    exports.sendToHost = sendToHost = function sendToHost(message) {
+	      WebViewBridge.send(JSON.stringify(message));
+	    };
+	  } catch (e) {
+	    console.log(e, e.stack);
+	  }
+	}, 500);
+	
+	/****************************************************************************
+	 * Private
+	 ****************************************************************************/
+	
+	function getRegion(x, y) {
+	  var regions = document.getElementsByClassName('touch-region');
+	  var check = function check(x, left, width) {
+	    return x >= left && x <= left + width;
+	  };
+	  for (var i = 0; i < regions.length; i++) {
+	    var region = regions[i];
+	    if (check(x, region.offsetLeft, region.offsetWidth) && check(y, region.offsetTop, region.offsetHeight)) {
+	      return { value: region.dataset.buttonvalue, el: region };
+	    }
+	  }
+	}
+	
+	function handleTouch(e) {
+	  e.preventDefault();
+	  // console.log(e);
+	  var touches = e.changedTouches;
+	  for (var i = 0; i < touches.length; i++) {
+	    // Any touches elsewhere while a finger is down on the joystick will
+	    // block input on the rest of the screen.
+	    var region = getRegion(touches[i].pageX, touches[i].pageY);
+	    if (e.type === 'touchstart') {
+	      region.el.style.opacity = .6;
+	    } else if (e.type === 'touchend') {
+	      region.el.style.opacity = 1;
+	    }
+	    if (callbacks.onTouch) {
+	      callbacks.onTouch(e, touches[i], region.value);
+	    }
+	    // return true;
+	  }
+	}
+	
+	document.body.addEventListener('touchstart', handleTouch);
+	document.body.addEventListener('touchmove', handleTouch);
+	document.body.addEventListener('touchend', handleTouch);
+	
+	// Disable zoom on iOS 10.
+	document.addEventListener('gesturestart', function (e) {
+	  e.preventDefault();
+	});
+	// TODO: replace this with sindresorhus/screenfull.js
+	var fullscreenButton = document.getElementById('fullscreen');
+	if (fullscreenButton) {
+	  var fullscreen = function fullscreen(e) {
+	    document.documentElement.webkitRequestFullScreen();
+	    if (!screen.orientation.type.includes('landscape')) {
+	      screen.orientation.lock('landscape').then(function () {
+	        return console.log('switched to landscape');
+	      }, function (err) {
+	        console.error(err);
+	        window.alert('please rotate device');
+	      });
+	    }
+	  };
+	
+	  fullscreenButton.addEventListener('touchstart', fullscreen);
+	}
+	
+	webtendo.callbacks.onMessageReceived = function (x) {
+	  // TODO: do something with message from host.
+	  console.log(x);
+	};
+	
+	webtendo.callbacks.onConnected = function (id) {
+	  console.log(id, 'connected');
+	  sendToHost({ hello: 'host' });
+	};
+
+/***/ },
+/* 49 */
+/*!************************************!*\
+  !*** ./public/scripts/webtendo.js ***!
+  \************************************/
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.clientId = exports.isHost = exports.callbacks = undefined;
+	exports.sendToClient = sendToClient;
+	exports.broadcast = broadcast;
+	exports.getClients = getClients;
+	
+	var _socket = __webpack_require__(/*! socket.io-client */ 1);
+	
+	var _socket2 = _interopRequireDefault(_socket);
+	
+	__webpack_require__(/*! webrtc-adapter */ 50);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	/****************************************************************************
+	 * Public interface
+	 ****************************************************************************/
+	
+	var callbacks = exports.callbacks = {
+	  // Called when a message is received. Host can check message.clientId for sender.
+	  onMessageReceived: undefined,
+	  // Called when a data channel opens, passing clientId as argument.
+	  onConnected: undefined,
+	  // Called when a data channel closes, passing clientId as argument.
+	  onDisconnected: undefined
+	};
+	
+	// Am I the host?
+	var isHost = exports.isHost = undefined;
+	// My ID.
+	var clientId = exports.clientId = undefined;
+	// Send a message to a particular client.
+	function sendToClient(recipientId, obj) {
+	  try {
+	    return dataChannels[recipientId].send(JSON.stringify(obj));
+	  } catch (e) {
+	    console.log('couldnt send', e, e.stack);
+	  }
+	}
+	// Send a message to all clients.
+	function broadcast(obj) {
+	  return getClients().map(function (client) {
+	    return sendToClient(client, obj);
+	  });
+	}
+	// Get a list of all the clients connected.
+	function getClients() {
+	  return Object.keys(dataChannels);
+	}
+	// Measure latency at 1Hz.
+	var AUTO_PING = false;
+	var VERBOSE = false;
+	
+	/****************************************************************************
+	 * Initial setup
+	 ****************************************************************************/
+	
+	var configuration = {
+	  'iceServers': [{ 'url': 'stun:stun.l.google.com:19302' }, { 'url': 'stun:stun.services.mozilla.com' }]
+	};
+	
+	// Create a random room if not already present in the URL.
+	exports.isHost = isHost = window.location.pathname.includes('host');
+	var room = window.location.hash.replace('#', '');
+	// Use session storage to maintain connections across refresh but allow
+	// multiple tabs in the same browser for testing purposes.
+	// Not to be confused with socket ID.
+	exports.clientId = clientId = sessionStorage.getItem('clientId');
+	if (!clientId) {
+	  exports.clientId = clientId = Math.random().toString(36).substr(2, 10);
+	  sessionStorage.setItem('clientId', clientId);
+	}
+	maybeLog()('Session clientId ' + clientId);
+	
+	/****************************************************************************
+	 * Signaling server
+	 ****************************************************************************/
+	
+	// Connect to the signaling server if we have webrtc access.
+	var socket;
+	try {
+	  new RTCSessionDescription();
+	  socket = _socket2.default.connect();
+	  attachListeners(socket);
+	} catch (e) {
+	  console.log('No WebRTC detected, bailing out.');
+	  setTimeout(function () {
+	    try {
+	      WebViewBridge;
+	    } catch (e) {
+	      console.log('Dis don look like ReactNative...');
+	      alert('This browser is not supported. Please use Android Chrome or iOS native app.');
+	    }
+	  }, 500);
+	}
+	
+	function attachListeners(socket) {
+	  socket.on('ipaddr', function (ipaddr) {
+	    maybeLog()('Server IP address is: ' + ipaddr);
+	    if (isHost) {
+	      document.getElementById('ip').innerText = 'Clients connect to ' + ipaddr;
+	    }
+	  });
+	
+	  socket.on('created', function (room, hostClientId) {
+	    maybeLog()('Created room', room, '- my client ID is', clientId);
+	    if (!isHost) {
+	      // Get dangling clients to reconnect if a host stutters.
+	      peerConns = {};
+	      dataChannels = {};
+	      socket.emit('create or join', room, clientId, isHost);
+	    }
+	  });
+	
+	  socket.on('full', function (room) {
+	    maybeLog()('server thinks room is full');
+	  });
+	
+	  socket.on('joined', function (room, clientId) {
+	    maybeLog()(clientId, 'joined', room);
+	    createPeerConnection(isHost, configuration, clientId);
+	  });
+	
+	  socket.on('log', function (array) {
+	    console.log.apply(console, array);
+	  });
+	
+	  socket.on('disconnected', function (clientId) {
+	    if (callbacks.onDisconnected) {
+	      callbacks.onDisconnected(clientId);
+	    }
+	  });
+	
+	  socket.on('message', signalingMessageCallback);
+	
+	  socket.on('nohost', function (room) {
+	    console.error('No host for', room);
+	    alert('No host for room ' + room);
+	  });
+	
+	  // Join a room
+	  socket.emit('create or join', room, clientId, isHost);
+	
+	  if (window.location.hostname.match(/localhost|127\.0\.0/)) {
+	    socket.emit('ipaddr');
+	  }
+	}
+	
+	/**
+	 * Send message to signaling server
+	 */
+	function sendMessage(message, recipient) {
+	  var payload = {
+	    recipient: recipient,
+	    sender: clientId,
+	    rtcSessionDescription: message
+	  };
+	  maybeLog()('Client sending message: ', payload);
+	  socket.emit('message', payload);
+	}
+	
+	/****************************************************************************
+	 * WebRTC peer connection and data channel
+	 ****************************************************************************/
+	
+	// Map from clientId to RTCPeerConnection. 
+	// For clients this will have only the host.
+	var peerConns = {};
+	// dataChannel.label is the clientId of the recipient. useful in onmessage.
+	var dataChannels = {};
+	
+	function signalingMessageCallback(message) {
+	  maybeLog()('Client received message:', message);
+	  var peerConn = peerConns[isHost ? message.sender : clientId];
+	  // TODO: if got an offer and isHost, ignore?
+	  if (message.rtcSessionDescription.type === 'offer') {
+	    maybeLog()('Got offer. Sending answer to peer.');
+	    peerConn.setRemoteDescription(new RTCSessionDescription(message.rtcSessionDescription), function () {}, logError);
+	    peerConn.createAnswer(onLocalSessionCreated(message.sender), logError);
+	  } else if (message.rtcSessionDescription.type === 'answer') {
+	    maybeLog()('Got answer.');
+	    peerConn.setRemoteDescription(new RTCSessionDescription(message.rtcSessionDescription), function () {}, logError);
+	  } else if (message.rtcSessionDescription.type === 'candidate') {
+	
+	    peerConn.addIceCandidate(new RTCIceCandidate({
+	      candidate: message.rtcSessionDescription.candidate
+	    }));
+	  } else if (message === 'bye') {
+	    // TODO: cleanup RTC connection?
+	  }
+	}
+	
+	// clientId: who to connect to?
+	// isHost: Am I the initiator?
+	// config: for RTCPeerConnection, contains STUN/TURN servers.
+	function createPeerConnection(isHost, config, recipientClientId) {
+	  maybeLog()('Creating Peer connection. isHost?', isHost, 'recipient', recipientClientId, 'config:', config);
+	  peerConns[recipientClientId] = new RTCPeerConnection(config);
+	
+	  // send any ice candidates to the other peer
+	  peerConns[recipientClientId].onicecandidate = function (event) {
+	    maybeLog()('icecandidate event:', event);
+	    if (event.candidate) {
+	      sendMessage({
+	        type: 'candidate',
+	        label: event.candidate.sdpMLineIndex,
+	        id: event.candidate.sdpMid,
+	        candidate: event.candidate.candidate
+	      }, recipientClientId);
+	    } else {
+	      maybeLog()('End of candidates.');
+	    }
+	  };
+	
+	  if (isHost) {
+	    maybeLog()('Creating Data Channel');
+	    dataChannels[recipientClientId] = peerConns[recipientClientId].createDataChannel(recipientClientId);
+	    onDataChannelCreated(dataChannels[recipientClientId]);
+	
+	    maybeLog()('Creating an offer');
+	    peerConns[recipientClientId].createOffer(onLocalSessionCreated(recipientClientId), logError);
+	  } else {
+	    peerConns[recipientClientId].ondatachannel = function (event) {
+	      maybeLog()('ondatachannel:', event.channel);
+	      dataChannels[recipientClientId] = event.channel;
+	      onDataChannelCreated(dataChannels[recipientClientId]);
+	    };
+	  }
+	}
+	
+	function onLocalSessionCreated(recipientClientId) {
+	  return function (desc) {
+	    var peerConn = peerConns[isHost ? recipientClientId : clientId];
+	    maybeLog()('local session created:', desc);
+	    peerConn.setLocalDescription(desc, function () {
+	      maybeLog()('sending local desc:', peerConn.localDescription);
+	      sendMessage(peerConn.localDescription, recipientClientId);
+	    }, logError);
+	  };
+	}
+	
+	function onDataChannelCreated(channel) {
+	  maybeLog()('onDataChannelCreated:', channel);
+	
+	  channel.onclose = function () {
+	    if (callbacks.onDisconnected) {
+	      callbacks.onDisconnected(channel.label);
+	    }
+	  };
+	  channel.onopen = function () {
+	    if (callbacks.onConnected) {
+	      callbacks.onConnected(channel.label);
+	    }
+	    if (AUTO_PING) {
+	      // As long as the channel is open, send a message 1/sec to
+	      // measure latency and verify everything works
+	      var cancel = window.setInterval(function () {
+	        try {
+	          channel.send(JSON.stringify({
+	            action: 'echo',
+	            time: performance.now()
+	          }));
+	        } catch (e) {
+	          console.error(e);
+	
+	          window.clearInterval(cancel);
+	        }
+	      }, 1000);
+	    } else {
+	      document.getElementById('latency').innerText = 'Connected';
+	    }
+	  };
+	
+	  channel.onmessage = function (event) {
+	    // maybeLog()(event);
+	    var x = JSON.parse(event.data);
+	    if (x.action === 'echo') {
+	      x.action = 'lag';
+	      channel.send(JSON.stringify(x));
+	    } else if (x.action == 'text') {
+	      maybeLog()(x.data);
+	    } else if (x.action == 'lag') {
+	      var str = 'round trip latency ' + (performance.now() - x.time).toFixed(2) + ' ms';
+	      // maybeLog()(str);
+	      document.getElementById('latency').innerText = str;
+	    } else if (callbacks.onMessageReceived) {
+	      x.clientId = channel.label;
+	      callbacks.onMessageReceived(x);
+	    } else {
+	      maybeLog()('unknown action');
+	    }
+	  };
+	}
+	
+	/****************************************************************************
+	 * Aux functions
+	 ****************************************************************************/
+	
+	function randomToken() {
+	  return Math.floor((1 + Math.random()) * 1e16).toString(16).substring(1);
+	}
+	
+	function logError(err) {
+	  console.log(err.toString(), err);
+	}
+	
+	function maybeLog() {
+	  if (VERBOSE) {
+	    return console.log;
+	  }
+	  return function () {};
+	}
 
 /***/ },
 /* 50 */

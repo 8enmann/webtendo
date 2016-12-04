@@ -53,8 +53,7 @@ var configuration = {
 
 // Create a random room if not already present in the URL.
 isHost = window.location.pathname.includes('host');
-// TODO: allow room override, maybe based on URL hash?
-var room = window.location.hash;
+var room = window.location.hash.replace('#', '');
 // Use session storage to maintain connections across refresh but allow
 // multiple tabs in the same browser for testing purposes.
 // Not to be confused with socket ID.
@@ -106,11 +105,7 @@ function attachListeners(socket) {
   });
 
   socket.on('full', function(room) {
-    //alert('Room ' + room + ' is full. We will create a new room for you.');
-    //window.location.hash = '';
-    //window.location.reload();
     maybeLog()('server thinks room is full');
-    // TODO: remove this
   });
 
   socket.on('joined', function(room, clientId) {
@@ -130,12 +125,15 @@ function attachListeners(socket) {
 
   socket.on('message', signalingMessageCallback);
 
-  socket.on('nohost', room => console.error('No host for', room));
+  socket.on('nohost', room => {
+    console.error('No host for', room);
+    alert('No host for room ' + room);
+  });
 
   // Join a room
   socket.emit('create or join', room, clientId, isHost);
 
-  if (location.hostname.match(/localhost|127\.0\.0/)) {
+  if (window.location.hostname.match(/localhost|127\.0\.0/)) {
     socket.emit('ipaddr');
   }
 }

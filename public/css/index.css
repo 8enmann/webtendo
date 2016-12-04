@@ -6,18 +6,19 @@ h1 {
     text-align: center;
     font-size: 3em;
 }
-a {
+.linklist > a {
     font-size: 2em;
     text-decoration: none;
     background-color: white;
     margin: 10px;
     padding: 10px;
     border-radius: 1em;
+    color: blue;
+    cursor: pointer;
 }
 
 .linklist {
     text-align: center;
-    
     display: flex;
     flex-direction: column;
 }
@@ -39,4 +40,14 @@ a {
     .linkbox {
         flex-direction: column;   
     }
+}
+
+.room {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1em;
+}
+
+.github-fork-ribbon:before {
+    background-color: #f80;
 }

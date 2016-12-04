@@ -4,36 +4,36 @@
 <head>
 
   <title>Webtendo</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.0/gh-fork-ribbon.min.css" />
   <link rel="stylesheet" href="/css/main.css" />
   <link rel="stylesheet" href="/css/index.css" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+
 
 </head>
 
 <body>
+  <a class="github-fork-ribbon" href="https://github.com/8enmann/webtendo" title="Fork me on GitHub">Fork on GitHub</a>
 
   <h1>Webtendo</h1>
-  <!-- TODO: redirect based on useragent -->
+  <div class="room">
+    <label>Room&nbsp;<input id="room" type="text" inputmode="url"
+                            placeholder="Connecting..."/></label>
+  </div>
   <div class="linkbox">
     <div class="clients linklist">
       <div class="bigbutton" href="client.html">Player</div>
-      <a href="spacewar/client.html"><span class="icon">&#128640;</span> Spacewar</a>
-      <a href="scrabble/client.html" style="display:none"><img class="icon" src="scrabble/assets/scrabble.png" /> Scrabble</a>
-      <a href="poker/client.html"><img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTATGiOk4In7CpqzNbjZA7-K7xesBF1hGoLtt4uxcTeP38LjSLl" class="icon"></img> Poker</a>
+      <a data-game="spacewar" data-role="client"><span class="icon">&#128640;</span> Spacewar</a>
+      <a data-game="scrabble" data-role="client" style="display:none"><img class="icon" src="scrabble/assets/scrabble.png" /> Scrabble</a>
+      <a data-game="poker" data-role="client"><img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTATGiOk4In7CpqzNbjZA7-K7xesBF1hGoLtt4uxcTeP38LjSLl" class="icon"></img> Poker</a>
     </div>
     <div class="hosts linklist">
       <div class="bigbutton" href="host.html">Host</div>
-      <a href="spacewar/host.html"><span class="icon">&#128640;</span> Spacewar</a>
-      <a href="scrabble/host.html" style="display:none"><img class="icon" src="scrabble/assets/scrabble.png" /> Scrabble</a>
-      <a href="poker/host.html"><img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTATGiOk4In7CpqzNbjZA7-K7xesBF1hGoLtt4uxcTeP38LjSLl" class="icon"></img> Poker</a>
+      <a data-game="spacewar" data-role="host"><span class="icon">&#128640;</span> Spacewar</a>
+      <a data-game="scrabble" data-role="host" style="display:none"><img class="icon" src="scrabble/assets/scrabble.png" /> Scrabble</a>
+      <a data-game="scrabble" data-role="host"><img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTATGiOk4In7CpqzNbjZA7-K7xesBF1hGoLtt4uxcTeP38LjSLl" class="icon"></img> Poker</a>
     </div>
   </div>
 </body>
-<script>
- // Hide host section. TODO: do this for mobile clients?
- if (location.hash === '#rn') {
-   document.getElementsByClassName('hosts')[0].style.display = 'none';
- }
-</script>
+<script src="../out/index-bundle.js"></script>
 </html>
