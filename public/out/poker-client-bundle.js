@@ -7910,7 +7910,7 @@
 	}
 	// Measure latency at 1Hz.
 	var AUTO_PING = false;
-	var VERBOSE = true;
+	var VERBOSE = false;
 	
 	/****************************************************************************
 	 * Initial setup
@@ -7921,25 +7921,6 @@
 	    "urls": ["turn:74.125.28.127:19305?transport=udp", "turn:[2607:F8B0:400E:C00::7F]:19305?transport=udp", "turn:74.125.28.127:443?transport=tcp", "turn:[2607:F8B0:400E:C00::7F]:443?transport=tcp"],
 	    "username": "CKnUk8IFEgbDVfpkrmUYzc/s6OMT",
 	    "credential": "Ww6o1xX5o4igYQgmiPWvXMFLQIQ=" }, { "urls": ["stun:stun.l.google.com:19302"] }]
-	  /*[
-	    {'url': 'stun:stun.l.google.com:19302'},
-	    {'url':'stun:stun.services.mozilla.com'},
-	    {
-	      'url': 'turn:192.158.29.39:3478?transport=udp',
-	      'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-	      'username': '28224511:1379330808'
-	    },
-	    {
-	      'url': 'turn:192.158.29.39:3478?transport=tcp',
-	      'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-	      'username': '28224511:1379330808'
-	    },
-	    {
-	      url: 'turn:numb.viagenie.ca',
-	      credential: 'muazkh',
-	      username: 'webrtc@live.com',
-	    },
-	  ]*/
 	};
 	
 	// Create a random room if not already present in the URL.
