@@ -8,6 +8,7 @@
   },
   "devtool": "source-map",
   "dependencies": {
+    "hashwords": "^0.2.1",
     "node-static": "0.7.7",
     "socket.io": "^1.5.1",
     "socket.io-client": "^1.5.1",

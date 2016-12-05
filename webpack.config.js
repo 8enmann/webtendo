@@ -2,6 +2,7 @@ var path = require('path');
 
 module.exports = {
   entry: {
+    'index': './public/scripts/index.js',
     'spacewar-client': './public/spacewar/joystick.js',
     'spacewar-host': './public/spacewar/spacewar.js',
     'poker-client': './public/poker/poker-client.js',

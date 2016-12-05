@@ -4,7 +4,13 @@ var os = require('os');
 var nodeStatic = require('node-static');
 var http = require('http');
 var socketIO = require('socket.io');
+var hashwords = require('hashwords');
 
+const hasher = hashwords({salt: '~webtendo~'});
+
+function getRoomId(seed) {
+  return hasher.hashStr(seed).toLowerCase().split(' ').slice(0,2).join('-');
+}
 
 var file = new nodeStatic.Server('./public');
 var app = http.createServer(function(req, res) {
@@ -17,10 +23,11 @@ var io = socketIO.listen(app);
 io.sockets.on('connection', function(socket) {
   var socketClientId;
   var hostId;
+  var clientIP;
   var socketRoom;
   if (socket.request.headers['x-forwarded-for']) {
-    socketRoom = socket.request.headers['x-forwarded-for'];
-    console.log('socketRoom', socketRoom);
+    clientIP = socket.request.headers['x-forwarded-for'];
+    console.log('clientIP', clientIP, 'aka', getRoomId(clientIP));
   }
 
   // convenience function to log server messages on the client
@@ -41,10 +48,14 @@ io.sockets.on('connection', function(socket) {
     }
   });
 
+  socket.on('get room', () => {
+    socket.emit('room', getRoomId(clientIP));
+  });
+
   socket.on('create or join', function(room, clientId, isHost) {
-    socketRoom = room || socketRoom || 'foo';
+    socketRoom = room || getRoomId(clientIP);
     room = socketRoom;
-    log('create or join room ' + room + ' from ' + clientId + ' ' + socket.handshake.address + '//' + socket.request.connection.remoteAddress);
+    log('create or join room ' + room + ' from ' + clientId);
     clients[clientId] = socket.id;
     socketClientId = clientId;
     if (isHost) {

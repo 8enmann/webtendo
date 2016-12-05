@@ -46,15 +46,22 @@ const VERBOSE = false;
 
 var configuration = {
   'iceServers': [
-    {'url': 'stun:stun.l.google.com:19302'},
-    {'url':'stun:stun.services.mozilla.com'},
+    {
+      "urls":[
+        "turn:74.125.28.127:19305?transport=udp",
+        "turn:[2607:F8B0:400E:C00::7F]:19305?transport=udp",
+        "turn:74.125.28.127:443?transport=tcp",
+        "turn:[2607:F8B0:400E:C00::7F]:443?transport=tcp"
+      ],
+      "username":"CKnUk8IFEgbDVfpkrmUYzc/s6OMT",
+      "credential":"Ww6o1xX5o4igYQgmiPWvXMFLQIQ="},
+    {"urls":["stun:stun.l.google.com:19302"]},
   ]
 };
 
 // Create a random room if not already present in the URL.
 isHost = window.location.pathname.includes('host');
-// TODO: allow room override, maybe based on URL hash?
-var room = '';
+var room = window.location.hash.replace('#', '');
 // Use session storage to maintain connections across refresh but allow
 // multiple tabs in the same browser for testing purposes.
 // Not to be confused with socket ID.
@@ -106,11 +113,7 @@ function attachListeners(socket) {
   });
 
   socket.on('full', function(room) {
-    //alert('Room ' + room + ' is full. We will create a new room for you.');
-    //window.location.hash = '';
-    //window.location.reload();
     maybeLog()('server thinks room is full');
-    // TODO: remove this
   });
 
   socket.on('joined', function(room, clientId) {
@@ -130,12 +133,15 @@ function attachListeners(socket) {
 
   socket.on('message', signalingMessageCallback);
 
-  socket.on('nohost', room => console.error('No host for', room));
+  socket.on('nohost', room => {
+    console.error('No host for', room);
+    alert('No host for room ' + room);
+  });
 
   // Join a room
   socket.emit('create or join', room, clientId, isHost);
 
-  if (location.hostname.match(/localhost|127\.0\.0/)) {
+  if (window.location.hostname.match(/localhost|127\.0\.0/)) {
     socket.emit('ipaddr');
   }
 }
