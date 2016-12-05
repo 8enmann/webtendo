@@ -21,6 +21,5 @@ module.exports = {
       loader: 'babel-loader'
     }
     ]
-  },
-  debug: true
+  }
 };
