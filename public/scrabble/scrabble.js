@@ -64,11 +64,6 @@ function shuffle(a) {
   }
 }
 
-function render() {
-  var $canvas = $("#canvas");	
-
-}
-
 function drawCharacters(count) {
   var chars = [];
   for (var i = 0; i < count; i++) {
