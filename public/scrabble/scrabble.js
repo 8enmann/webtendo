@@ -19,6 +19,13 @@ var colors = ["#FF0000", // red
               "#FFA500", // orange
               "#800080", // purple
              ];
+var names = ["Gabble Scream",
+             "Mr Cab Beagles",
+             "Brace Gambles",
+             "Mrs Abbe Glace",
+             "Crab Lamb Gees",
+             "Crabs Bagel Me"
+            ];
 var currentPosition = {x: 7, y: 7};
 
 function initScrabbleBag() {
@@ -89,7 +96,7 @@ function maybeStartGame() {
   shuffle(scrabbleBag);
   for (var id in players) {
     players[id].hand = drawCharacters(7);
-    webtendo.sendToClient(id, {hand: players[id].hand});
+    webtendo.sendToClient(id, players[id]);
   }
   setCurrentPlayer(0);
 }
@@ -97,6 +104,7 @@ function maybeStartGame() {
 function setCurrentPlayer(playerIndex) {
   currentPlayer = playerIndex;
   webtendo.sendToClient(playersArray[playerIndex], {message: "Your turn!"});
+  drawInfoPanel();
 }
 
 function handleJoystickMoved(x, y) {
@@ -148,14 +156,14 @@ function isAvailable(position) {
 
 function playLetter(letter) {
   // confirm letter is in current player's hand
+  var currPlayerID = playersArray[currentPlayer];
   if (!isAvailable(currentPosition)) {
-    webtendo.sendToClient({error: "This spot is already taken!"});
+    webtendo.sendToClient(currPlayerID, {error: "This spot is already taken!"});
     return;
   }
-  var currPlayerID = playersArray[currentPlayer];
   var hand = players[currPlayerID].hand;
   if (!_.contains(hand, letter)) {
-    webtendo.sendToClient({error: "Player played a letter not in hand. How did this happen?"});
+    webtendo.sendToClient(currPlayerID, {error: "Player played a letter not in hand. How did this happen?"});
     return;
   }
   hand.splice(_.indexOf(hand, letter), 1);
@@ -167,7 +175,7 @@ function playLetter(letter) {
   currentlyPlayedPositions.push(currentPosition);
   moveCursor({x: currentPosition.x + 1, y: currentPosition.y});  // TODO: Move cursor to closest unfilled position.
   renderBoard();
-  webtendo.sendToClient(currPlayerID, {hand: players[currPlayerID].hand});
+  webtendo.sendToClient(currPlayerID, players[currPlayerID]);
 }
 
 webtendo.callbacks.onMessageReceived = function(x) {
@@ -201,7 +209,7 @@ webtendo.callbacks.onMessageReceived = function(x) {
       hand.push(scrabbleBag.pop());
     }
     players[x.clientId].hand = hand;
-    webtendo.sendToClient(x.clientId, {hand: hand});
+    webtendo.sendToClient(x.clientId, players[x.clientId]);
     currentlyPlayedPositions = [];
     currentPosition = {x: 7, y: 7};
     renderBoard();
@@ -213,9 +221,7 @@ webtendo.callbacks.onConnected = function(id) {
   console.log(id + " connected");
   if (players[id]) {
     // player reconnected. give the player their hand
-    if (players[id].hand) {
-      webtendo.sendToClient(id, {hand: players[id].hand});
-    }
+    webtendo.sendToClient(id, players[id]);
     return;
   }
   if (gameStarted) {
@@ -230,16 +236,30 @@ webtendo.callbacks.onConnected = function(id) {
   var currNumPlayers = Object.keys(players).length;
   players[id] = {
     color: colors[currNumPlayers],
+    name: names[currNumPlayers],
   }
+  webtendo.sendToClient(id, players[id]);
   playersArray.push(id);
+  drawInfoPanel();
 }
 
 function drawInfoPanel() {
+  ctx.clearRect(0, 0, 299, canvas.offsetHeight);
   ctx.fillStyle = "white";
   ctx.font = "24px Courier New";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
+
+  var yOffset = 0;
   ctx.fillText("Scrabble", 0, 0);
+  yOffset += 24;
+
+  ctx.fillText("Players List", 0, yOffset);
+  _.each(playersArray, function(playerId, index) {
+    yOffset += 24;
+    var p = players[playerId];
+    ctx.fillText((currentPlayer == index ? "> " : "") + p.name, 5, yOffset);
+  });
 }
 
 var offsetX = 300;

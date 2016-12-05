@@ -31,7 +31,7 @@ function createCharacterTile(character) {
 
 function updateInfo() {
   $("#info").empty();
-  $("#info").append("<div class=info>" + name + "</div>");
+  $("#info").append("<div class=info>Player: " + name + "</div>");
   if ($("#hand").children().length > 0) { // game started. display points and stuff
     $("#info").append(" \
         <div class=info>Points: " + points + "</div> \
@@ -72,6 +72,11 @@ webtendo.callbacks.onMessageReceived = function(x) {
   if (x.message) {
     alert(x.message);
     return;
+  }
+
+  if (x.name) {
+    name = x.name;
+    updateInfo();
   }
 
   if (x.hand) {
