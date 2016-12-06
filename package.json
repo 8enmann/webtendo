@@ -16,7 +16,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "webpack": "webpack --progress --colors --watch -d"
+    "webpack": "webpack --progress --colors --watch -d",
+    "postinstall": "webpack -p --progress --colors"
   },
   "engines": {
     "node": "6.6.0",
