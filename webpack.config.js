@@ -7,6 +7,8 @@ module.exports = {
     'spacewar-host': './public/spacewar/spacewar.js',
     'poker-client': './public/poker/poker-client.js',
     'poker-host': './public/poker/poker.js',
+    'scrabble-client': './public/scrabble/scrabble-client.js',
+    'scrabble-host': './public/scrabble/scrabble.js',
   },
   output: {
     path: path.join(__dirname, 'public/out'),
