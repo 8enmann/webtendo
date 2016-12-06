@@ -12,7 +12,6 @@
     "node-static": "0.7.7",
     "socket.io": "^1.5.1",
     "socket.io-client": "^1.5.1",
-    "webpack": "^1.13.3",
     "webrtc-adapter": "^2.0.6"
   },
   "scripts": {
