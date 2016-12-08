@@ -23,7 +23,7 @@ Visit [http://localhost:8080](http://localhost:8080) in two tabs
 - [x] Heroku deployment
 - [x] Game selection
 - [x] Automatic/manual room determination based on external IP
-- [ ] Native client (in progress at 8enmann/WebtendoClient)
+- [x] Native client (at 8enmann/WebtendoClient)
 - [ ] autotrack.js integration
 - [ ] Game rating
 
