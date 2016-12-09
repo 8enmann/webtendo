@@ -11,6 +11,11 @@ npm start
 
 Visit [http://localhost:8080](http://localhost:8080) in two tabs.
 
+If you're making changes to hosts/controllers, use
+```bash
+npm run webpack
+```
+
 If you're making changes to `server.js` consider
 ```bash
 devtool server.js -w
