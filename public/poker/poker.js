@@ -328,8 +328,9 @@ function main() {
 function getHighestBet(){
     //find the minimum bet
     let currentHighestBet = 0;
-    for(let player of players)
-	currentHighestBet=Math.max(currentHighestBet,player.committedBet);
+    for(let player of Object.values(players)) {
+	    currentHighestBet=Math.max(currentHighestBet,player.committedBet);
+    }
     return currentHighestBet;
 }
 
