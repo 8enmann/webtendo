@@ -11,7 +11,7 @@ npm start
 
 Visit [http://localhost:8080](http://localhost:8080) in two tabs.
 
-If you're making changes to hosts/controllers, use
+If you're making changes to hosts/clients, use
 ```bash
 npm run webpack
 ```
@@ -63,6 +63,7 @@ client.sendToHost(obj);
 
 ## Comms flow
 In `public/scripts/webtendo.js`
+
 1. Socket connection to server
 1. Host asks server to join a room (emit 'create or join')
 1. Get back 'created'
