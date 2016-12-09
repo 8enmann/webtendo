@@ -9,7 +9,7 @@ npm install
 npm start
 ```
 
-Visit [http://localhost:8080](http://localhost:8080) in two tabs.
+Visit [http://localhost:8080](http://localhost:8080) in two tabs. Click host in one and player in the other. For the player, the controller only responds to touch events, so open devtools (⌘-alt-j) and switch to device mode (⌘-⬆-m).
 
 If you're making changes to hosts/clients, use
 ```bash
