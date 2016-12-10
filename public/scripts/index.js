@@ -1,6 +1,7 @@
 'use strict';
 
 import io from 'socket.io-client';
+import './analytics';
 
 let socket = io.connect();
 let el = document.getElementById('room');

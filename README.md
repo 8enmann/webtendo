@@ -57,7 +57,7 @@ client.sendToHost(obj);
 - [x] Game selection
 - [x] Automatic/manual room determination based on external IP
 - [x] Native client (at 8enmann/WebtendoClient)
-- [ ] autotrack.js integration
+- [x] autotrack.js integration
 - [ ] Game rating
 
 
