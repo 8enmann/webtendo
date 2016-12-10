@@ -3,8 +3,6 @@
 import io from 'socket.io-client';
 import * as analytics from './analytics';
 
-analytics.init();
-
 let socket = io.connect();
 let el = document.getElementById('room');
 socket.on('room', room => {

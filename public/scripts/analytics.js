@@ -1,4 +1,4 @@
-import 'autotrack';
+require('autotrack');
 
 export function init() {
   console.log('ga');
@@ -6,6 +6,7 @@ export function init() {
   ga('create', 'UA-88759837-1', 'auto');
 
   // Start plugins
+  /*
   ga('require', 'cleanUrlTracker', {
     stripQuery: true,
     indexFilename: 'index.html',
@@ -18,7 +19,7 @@ export function init() {
       nonInteraction: null
     }
   });
-
+*/
   ga('send', 'pageview');
 
 }
