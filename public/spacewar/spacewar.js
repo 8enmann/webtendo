@@ -129,8 +129,8 @@ class Player extends Circle {
       this.theta = Math.atan2(this.stick.position.y, this.stick.position.x);
     }
     // Bounds.
-    this.x = Math.min(Math.max(0, this.x), canvas.offsetWidth);
-    this.y = Math.min(Math.max(0, this.y), canvas.offsetHeight);
+    this.x = Math.min(Math.max(this.r, this.x), canvas.offsetWidth - this.r);
+    this.y = Math.min(Math.max(this.r, this.y), canvas.offsetHeight - this.r);
   }
 
   respawn() {
@@ -176,7 +176,7 @@ class Bullet extends Circle {
       }
 
       for (var player of section.players) {
-        if (this.intersects(player)) {
+        if (this.owner != player.id && this.intersects(player)) {
           collided = true;
           players[this.owner].score++;
           player.respawn();
@@ -185,7 +185,7 @@ class Bullet extends Circle {
       }
 
       for (var bullet of section.bullets) {
-        if (this.x == bullet.x && this.y == bullet.y && this.owner == bullet.owner) {
+        if (this.owner === bullet.owner) {
           continue;
         }
         if (this.intersects(bullet)) {
