@@ -38,7 +38,7 @@ export function getClients() {
 }
 // Measure latency at 1Hz.
 const AUTO_PING = false;
-const VERBOSE = false;
+const VERBOSE = true;
 
 /****************************************************************************
  * Initial setup

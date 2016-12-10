@@ -8,10 +8,13 @@
   },
   "devtool": "source-map",
   "dependencies": {
+    "autotrack": "^1.0.3",
     "hashwords": "^0.2.1",
+    "jquery": "^3.1.1",
     "node-static": "0.7.7",
     "socket.io": "^1.5.1",
     "socket.io-client": "^1.5.1",
+    "underscore": "^1.8.3",
     "webrtc-adapter": "^2.0.6"
   },
   "scripts": {
@@ -27,7 +30,7 @@
     "babel-core": "^6.18.2",
     "babel-loader": "^6.2.8",
     "babel-plugin-transform-flow-strip-types": "^6.18.0",
-    "babel-preset-es2015": "^6.18.0",
+    "babel-preset-latest": "^6.16.0",
     "webpack": "^1.13.3"
   }
 }
