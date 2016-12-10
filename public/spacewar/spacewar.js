@@ -105,9 +105,9 @@ class Player extends Circle {
 
   update(modifier) {
     if (this.a) { // Boost!
-      this.speed = 200;
+      this.speed = 350;
     } else {
-      this.speed = 100;
+      this.speed = 300;
     }
     if (this.b) {
       // Fire weapon.
