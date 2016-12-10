@@ -1,6 +1,7 @@
 import 'autotrack';
 
 export function init() {
+  console.log('ga');
   // In the analytics.js tracking snippet
   ga('create', 'UA-88759837-1', 'auto');
 
@@ -21,3 +22,5 @@ export function init() {
   ga('send', 'pageview');
 
 }
+
+init();
