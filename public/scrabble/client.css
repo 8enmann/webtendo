@@ -37,7 +37,7 @@ body {
   border: solid black 1px;
 }
 
-.letter {
+.letter-tile {
   background-color: #ffffff;
   color: #000;
   float: left;
@@ -46,12 +46,15 @@ body {
   margin: 2px;
   width: 30px;
   height: 30px;
-  font-size: 24px;
   text-align: center;
 }
 
-.letter.selected {
+.letter-tile.selected {
   background-color: #0099cc;
+}
+
+.letter {
+  font-size: 24px;
 }
 
 .ctrl-left {
