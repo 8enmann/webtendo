@@ -51,3 +51,9 @@ h1 {
 .github-fork-ribbon:before {
     background-color: #f80;
 }
+
+.instructions {
+    padding: 1em;
+     display: flex;
+    justify-content: center;
+}
