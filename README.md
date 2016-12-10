@@ -1,7 +1,7 @@
 # webtendo
-Nintendo is great because everyone sits in a room and plays games together, but why buy a console? Why limit to 4 players? Everyone has a phone that can turn into a controller, and at least a laptop for the main screen. Let's bring in-person multiplayer to the web!
+Nintendo is great because everyone sits in a room and plays games together, but why buy a console? Why limit to 4 players? Everyone has a phone that can turn into a controller, and at least a laptop for the main screen. Let's bring in-person multiplayer to the web! And because the framework is as vanilla as possible, it should be easy to port existing games.
 
-[Heroku demo](http://webtendo.herokuapp.com) (iOS browser is broken since it doesn't support browser WebRTC, [native app on iTunes]()([src](https://github.com/8enmann/WebtendoClient))
+[Heroku demo](http://webtendo.herokuapp.com) (iOS browser is broken since it doesn't support browser WebRTC, [native app on iTunes](https://itunes.apple.com/us/app/webtendo/id1180349310)([src](https://github.com/8enmann/WebtendoClient)))
 
 ## Run
 ```bash
@@ -42,7 +42,7 @@ client.sendToHost(obj);
 * Add an entry for your host and client to `webpack.config.js`
 * Restart the webpack watcher if it's already running, or start it with `npm run webpack`
 * Add your new host and client entries to `public/index.html`
-* Send a pull request!
+* Send a pull request! Once it's in I'll deploy for you.
 
 ## Features
 - [x] Signaling server + WebRTC
