@@ -9,6 +9,35 @@ var points = 0;
 var numTilesLeft = 100;
 var playerReady = false;
 
+var letterToPointsMap = {
+    'E': 1,
+    'A': 1,
+    'I': 1,
+    'O': 1,
+    'N': 1,
+    'R': 1,
+    'T': 1,
+    'L': 1,
+    'S': 1,
+    'U': 1,
+    'D': 2,
+    'G': 2,
+    'B': 3,
+    'C': 3,
+    'M': 3,
+    'P': 3,
+    'F': 4,
+    'H': 4,
+    'V': 4,
+    'W': 4,
+    'Y': 4,
+    'K': 5,
+    'J': 8,
+    'X': 8,
+    'Q': 10,
+    'Z': 10,
+};
+
 function updateHand(hand) {
   $("#hand").empty();
 
@@ -21,12 +50,22 @@ function updateHand(hand) {
 }
 
 function createCharacterTile(character) {
+  var $tile = $("<div />", {
+    class: 'letter-tile touch-region',
+  });
+  $tile.attr('data-buttonvalue', 'character=' + character);
   var $character = $("<div />", {
-    class: 'letter touch-region',
+    class: 'letter',
   });
   $character.text(character);
-  $character.attr('data-buttonvalue', 'character=' + character);
-  return $character;
+  $tile.append($character);
+
+  var $points = $("<div />", {
+    class: 'points',
+  });
+  $points.text(letterToPointsMap[character]);
+  $tile.append($points);
+  return $tile;
 }
 
 function updateInfo() {
@@ -110,7 +149,6 @@ client.callbacks.onTouch = function(e, touch, region) {
     // which character?
     var params = {};
     _.each(region.split(','), function(a) {
-      console.log(a);
       var b = a.split('=');
       params[b[0]] = b[1];
     });
@@ -147,8 +185,8 @@ function selectCharacter(e, character) {
   _.each($("#hand").children(), function(charDiv) {
     $(charDiv).removeClass("selected");
   });
-  $(e.target).toggleClass('selected');
   selectedCharacter = character;
+  $(e.target).closest('.letter-tile').toggleClass('selected');
 }
 
 function moveStick(x,y) {
