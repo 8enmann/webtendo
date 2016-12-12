@@ -53,11 +53,11 @@ function createCharacterTile(character) {
   var $tile = $("<div />", {
     class: 'letter-tile touch-region',
   });
+  $tile.attr('data-buttonvalue', 'character=' + character);
   var $character = $("<div />", {
     class: 'letter',
   });
   $character.text(character);
-  $character.attr('data-buttonvalue', 'character=' + character);
   $tile.append($character);
 
   var $points = $("<div />", {
@@ -149,7 +149,6 @@ client.callbacks.onTouch = function(e, touch, region) {
     // which character?
     var params = {};
     _.each(region.split(','), function(a) {
-      console.log(a);
       var b = a.split('=');
       params[b[0]] = b[1];
     });
@@ -186,8 +185,8 @@ function selectCharacter(e, character) {
   _.each($("#hand").children(), function(charDiv) {
     $(charDiv).removeClass("selected");
   });
-  $(e.target).toggleClass('selected');
   selectedCharacter = character;
+  $(e.target).closest('.letter-tile').toggleClass('selected');
 }
 
 function moveStick(x,y) {
