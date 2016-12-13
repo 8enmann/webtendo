@@ -15,7 +15,10 @@ export var sendToHost = function(obj) {
 
 // Tell user to rotate screen.
 export function checkOrientation(orientation = 'landscape') {
-  if (!window.matchMedia(`(orientation: ${orientation})`).matches) {
+  // if (!window.matchMedia(`(orientation: ${orientation})`).matches) {
+  if (orientation == 'portrait' ?
+      window.innerHeight < window.innerWidth :
+      window.innerHeight > window.innerWidth) {
     alert('Please rotate your device');
   }
 }
