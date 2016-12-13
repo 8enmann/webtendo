@@ -13,21 +13,12 @@ export var sendToHost = function(obj) {
   return webtendo.sendToClient(webtendo.clientId, obj);
 }
 
-
-setTimeout(() => {
-  try {
-    WebViewBridge.onMessage = function (stringifiedMessage) {
-      if (webtendo.callbacks.onMessageReceived) {
-        webtendo.callbacks.onMessageReceived(JSON.parse(stringifiedMessage));
-      }
-    };
-    sendToHost = function(message) {
-      WebViewBridge.send(JSON.stringify(message));
-    };
-  } catch (e) {
-    console.log(e, e.stack);
+// Tell user to rotate screen.
+export function checkOrientation(orientation = 'landscape') {
+  if (!window.matchMedia(`(orientation: ${orientation})`).matches) {
+    alert('Please rotate your device');
   }
-}, 500);
+}
 
 /****************************************************************************
  * Private

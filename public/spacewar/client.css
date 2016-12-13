@@ -1,23 +1,27 @@
 body {
-  font-family: sans-serif;
-  background-color: #404040;
-  color:white;
-  margin: 0;
-  padding: 0;
-  justify-content: space-between;
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  align-items: center;
+    font-family: sans-serif;
+    background-color: #404040;
+    color:white;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+}
 
+.container {
+    justify-content: space-between;
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    align-items: center;
 }
 
 .fullscreen {
-  position:absolute;
-  top:0;
-  width: 3em;
-  background-color:white;
-  margin: 4px;
+    position:absolute;
+    top:0;
+    width: 3em;
+    background-color:white;
+    margin: 4px;
 }
 
 button {
@@ -33,67 +37,67 @@ button {
     -webkit-tap-highlight-color: transparent;  /* i.e. Nexus5,Chrome and Kindle Fire HD 7 */
     -webkit-appearance: button; /* for input */
     -webkit-user-select: none; /* for button */
-       -moz-user-select: none;
-        -ms-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 #buttonBox {
-  /* right: 0; */
-  /* position:absolute; */
-  /* 100% doesn't account for status bar.... :( */
-  height: 100%;
-  width:50%;
-  display: flex;
-  flex-direction: column;
+    /* right: 0; */
+    /* position:absolute; */
+    /* 100% doesn't account for status bar.... :( */
+    height: 100%;
+    width:50%;
+    display: flex;
+    flex-direction: column;
 }
 
 .a,
 .b {
-  display:block;
-  width: 100%;
-  flex: 1;
-  font-size: 3em;
-  border-radius: 5px;
+    display:block;
+    width: 100%;
+    flex: 1;
+    font-size: 3em;
+    border-radius: 5px;
 }
 
 .a {
-  background-color: #3F51B5;
+    background-color: #3F51B5;
 }
 .b {
-  background-color: #E91E63;
+    background-color: #E91E63;
 }
 
 button:active {
-  opacity: .5;
+    opacity: .5;
 }
 
 #joystick {
-  width: 80vh;
-  height: 80vh;
-  border-radius: 50%;
-  background-color: #2196F3;
+    width: 80vh;
+    height: 80vh;
+    border-radius: 50%;
+    background-color: #2196F3;
 }
 
 #stick {
-  width: 2rem;
-  height: 2rem;
-  position:relative;
-  top:calc(50% - 15px);
-  left: calc(50% - 15px);
-  border-radius: 50%;
-  background-color: white;
-  border: solid black 1px;
+    width: 2rem;
+    height: 2rem;
+    position:relative;
+    top:calc(50% - 15px);
+    left: calc(50% - 15px);
+    border-radius: 50%;
+    background-color: white;
+    border: solid black 1px;
 }
 
 .ctrl-left {
-  display: flex;
-  flex: 1;
-  justify-content: center;
+    display: flex;
+    flex: 1;
+    justify-content: center;
 }
 
 #latency {
-  position: absolute;
-  bottom: 0;
-  margin: 10px;
-  opacity: .5;
+    position: absolute;
+    bottom: 0;
+    margin: 10px;
+    opacity: .5;
 }

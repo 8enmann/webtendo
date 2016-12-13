@@ -55,8 +55,16 @@ client.callbacks.onTouch = function(e, touch, region) {
     }
   }
 }
+
+// Listen for orientation changes
+window.addEventListener("orientationchange", () => {
+  window.setTimeout(() => {
+    resetStick();
+  }, 200);
+}, false);
+
 function resetStick() {
   moveStick(joystick.offsetHeight/2, joystick.offsetWidth/2);
 }
-// TODO: call this again on screen orientation change.
-resetStick();
+
+client.checkOrientation();

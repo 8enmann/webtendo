@@ -7,6 +7,7 @@ import 'webrtc-adapter';
  * Public interface
  ****************************************************************************/
 
+// TODO: make onConnected/Disconnected take an obj
 export var callbacks = {
   // Called when a message is received. Host can check message.clientId for sender.
   onMessageReceived: undefined, 
@@ -44,6 +45,7 @@ const VERBOSE = true;
  * Initial setup
  ****************************************************************************/
 
+let useBridge = false;
 var configuration = {
   'iceServers': [
     {
@@ -59,12 +61,14 @@ var configuration = {
   ]
 };
 
+
 // Create a random room if not already present in the URL.
 isHost = window.location.pathname.includes('host');
 var room = window.location.hash.replace('#', '');
 // Use session storage to maintain connections across refresh but allow
 // multiple tabs in the same browser for testing purposes.
 // Not to be confused with socket ID.
+// TODO: use localStorage instead for ReactNative?
 clientId = sessionStorage.getItem('clientId');
 if (!clientId) {
   clientId = Math.random().toString(36).substr(2, 10);
@@ -77,23 +81,54 @@ maybeLog()('Session clientId ' + clientId);
  ****************************************************************************/
 
 // Connect to the signaling server if we have webrtc access.
-var socket;
+let socket;
 try {
   new RTCSessionDescription();
   socket = io.connect();
   attachListeners(socket);
 } catch (e) {
-  console.log('No WebRTC detected, bailing out.');
+  console.log('No WebRTC detected, checking for ReactNative.');
   setTimeout(() => {
     try {
-      WebViewBridge;
+      WebViewBridge.onMessage = function (stringifiedMessage) {
+        // Awful hack since Safari doesn't like parsing "sdp" field.
+        let sdp = /"sdp"\:"(:?[\s\S]*)",/g.exec(stringifiedMessage);
+        if (sdp) {
+          stringifiedMessage = stringifiedMessage.replace(sdp[0], "");
+        }
+        let x = JSON.parse(stringifiedMessage);
+        if (sdp) {
+          x.rtcSessionDescription.sdp = sdp[1];
+        }
+        if (callbacks[x.webrtcAction] !== undefined) {
+          let action = x.webrtcAction;
+          delete x.webrtcAction;
+          callbacks[action](x);
+        } else if (x.webrtcAction == 'signal') {
+          sendMessage(x.rtcSessionDescription, x.recipient);
+        } else {
+          console.warn('unexpected message', x);
+        }
+      };
+      sendToClient = function(recipientId, message) {
+        message.recipientId = recipientId;
+        message.webrtcAction = 'send';
+        WebViewBridge.send(JSON.stringify(message));
+      };
+      console.log('Found ReactNative.');
+      
+      socket = io.connect();
+      useBridge = true;
+      attachListeners(socket);
     } catch (e) {
-      console.log('Dis don look like ReactNative...');
-      alert('This browser is not supported. Please use Android Chrome or iOS native app.');
+      console.warn('This doesn\'t look like ReactNative');
+      // TODO: redirect to app store?
+      // alert('This browser is not supported. Please use Android Chrome or iOS native app.');
     }
-  }, 500);
+  }, 1000);
 }
 
+// If useBridge is true, use WebViewBridge for WebRTC.
 function attachListeners(socket) {
   socket.on('ipaddr', function(ipaddr) {
     maybeLog()('Server IP address is: ' + ipaddr);
@@ -106,19 +141,28 @@ function attachListeners(socket) {
     maybeLog()('Created room', room, '- my client ID is', clientId);
     if (!isHost) {
       // Get dangling clients to reconnect if a host stutters.
-      peerConns = {};
-      dataChannels = {};
+      if (useBridge) {
+        WebViewBridge.send(JSON.stringify({webrtcAction: 'created', isHost: isHost, clientId: clientId}))
+      } else {
+        peerConns = {};
+        dataChannels = {};
+      }
       socket.emit('create or join', room, clientId, isHost);
     }
   });
 
   socket.on('full', function(room) {
     maybeLog()('server thinks room is full');
+    alert(`Room ${room} looks full`);
   });
 
   socket.on('joined', function(room, clientId) {
     maybeLog()(clientId, 'joined', room);
-    createPeerConnection(isHost, configuration, clientId);
+    if (useBridge) {
+      WebViewBridge.send(JSON.stringify({webrtcAction: 'joined', configuration: configuration, clientId: clientId, isHost: isHost}))
+    } else {
+      createPeerConnection(isHost, configuration, clientId);
+    }
   });
 
   socket.on('log', function(array) {
@@ -135,7 +179,7 @@ function attachListeners(socket) {
 
   socket.on('nohost', room => {
     console.error('No host for', room);
-    alert('No host for room ' + room);
+    alert(`No host for room ${room}. Please open a host on your laptop.`);
   });
 
   // Join a room
@@ -171,18 +215,24 @@ var dataChannels = {};
 
 function signalingMessageCallback(message) {
   maybeLog()('Client received message:', message);
+  if (useBridge) {
+    message.webrtcAction = 'message';
+    WebViewBridge.send(JSON.stringify(message));
+    return;
+  }
+
   var peerConn = peerConns[isHost ? message.sender : clientId];
   // TODO: if got an offer and isHost, ignore?
   if (message.rtcSessionDescription.type === 'offer') {
     maybeLog()('Got offer. Sending answer to peer.');
     peerConn.setRemoteDescription(new RTCSessionDescription(message.rtcSessionDescription), function() {},
-                                  logError);
-    peerConn.createAnswer(onLocalSessionCreated(message.sender), logError);
+                                  logError());
+    peerConn.createAnswer(onLocalSessionCreated(message.sender), logError());
 
   } else if (message.rtcSessionDescription.type === 'answer') {
     maybeLog()('Got answer.');
     peerConn.setRemoteDescription(new RTCSessionDescription(message.rtcSessionDescription), function() {},
-                                  logError);
+                                  logError());
 
   } else if (message.rtcSessionDescription.type === 'candidate') {
     
@@ -224,7 +274,7 @@ function createPeerConnection(isHost, config, recipientClientId) {
     onDataChannelCreated(dataChannels[recipientClientId]);
 
     maybeLog()('Creating an offer');
-    peerConns[recipientClientId].createOffer(onLocalSessionCreated(recipientClientId), logError);
+    peerConns[recipientClientId].createOffer(onLocalSessionCreated(recipientClientId), logError());
   } else {
     peerConns[recipientClientId].ondatachannel = (event) => {
       maybeLog()('ondatachannel:', event.channel);
@@ -241,7 +291,7 @@ function onLocalSessionCreated(recipientClientId) {
     peerConn.setLocalDescription(desc, () => {
       maybeLog()('sending local desc:', peerConn.localDescription);
       sendMessage(peerConn.localDescription, recipientClientId);
-    }, logError);
+    }, logError());
   };
 }
 
@@ -290,6 +340,9 @@ function onDataChannelCreated(channel) {
       // maybeLog()(str);
       document.getElementById('latency').innerText = str;
     } else if (callbacks.onMessageReceived) {
+      if (x.hello) {
+        document.getElementById('latency').innerText = 'Connected';
+      }
       x.clientId = channel.label;
       callbacks.onMessageReceived(x);
     } else {
@@ -308,12 +361,19 @@ function randomToken() {
   return Math.floor((1 + Math.random()) * 1e16).toString(16).substring(1);
 }
 
-function logError(err) {
-  console.log(err.toString(), err);
+function logError() {
+  return console.error
 }
 
 function maybeLog() {
   if (VERBOSE) {
+    if (useBridge) {
+      return function(...args) {
+        console.log(args);
+        WebViewBridge.send(JSON.stringify({
+          webrtcAction: 'log', flat: JSON.stringify(args), log: args}));
+      }
+    }
     return console.log;
   }
   return function(){};
