@@ -294,7 +294,8 @@ webtendo.callbacks.onMessageReceived = function(x) {
   }
 };
 
-webtendo.callbacks.onConnected = function(id) {
+webtendo.callbacks.onConnected = function(x) {
+  let id = x.clientId;
   console.log(id, 'connected');
   webtendo.sendToClient(id, {hello: 'client'});
   if (!players[id]) {
@@ -302,14 +303,15 @@ webtendo.callbacks.onConnected = function(id) {
   }
 };
 
-webtendo.callbacks.onDisconnected = function(id) {
+webtendo.callbacks.onDisconnected = function(x) {
+  let id = x.clientId;
   console.log(id, 'disconnected');
   // TODO: find out why ios disconnects. maybe just simulator?
   // delete players[id];
 };
 
 function sectionForCoordinate(x, y) {
-  // TODO: return a list of sections
+  // TODO: return a list of sections to handle large objs properly.
   x = Math.max(0, Math.min(x, canvas.offsetWidth - 1));
   y = Math.max(0, Math.min(y, canvas.offsetHeight - 1));
 

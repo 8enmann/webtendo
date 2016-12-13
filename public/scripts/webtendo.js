@@ -11,7 +11,7 @@ import 'webrtc-adapter';
 export var callbacks = {
   // Called when a message is received. Host can check message.clientId for sender.
   onMessageReceived: undefined, 
-// Called when a data channel opens, passing clientId as argument.
+  // Called when a data channel opens, passing clientId as argument.
   onConnected: undefined,
   // Called when a data channel closes, passing clientId as argument.
   onDisconnected: undefined,
@@ -37,6 +37,10 @@ export function broadcast(obj) {
 export function getClients() {
   return Object.keys(dataChannels);
 }
+
+// Running dev server.
+export const IS_LOCAL = window.location.hostname.match(/localhost|127\.0\.0/);
+
 // Measure latency at 1Hz.
 const AUTO_PING = false;
 const VERBOSE = true;
@@ -69,10 +73,11 @@ var room = window.location.hash.replace('#', '');
 // multiple tabs in the same browser for testing purposes.
 // Not to be confused with socket ID.
 // TODO: use localStorage instead for ReactNative?
-clientId = sessionStorage.getItem('clientId');
+let storage = IS_LOCAL ? sessionStorage : localStorage;
+clientId = storage.getItem('clientId');
 if (!clientId) {
   clientId = Math.random().toString(36).substr(2, 10);
-  sessionStorage.setItem('clientId', clientId);
+  storage.setItem('clientId', clientId);
 }
 maybeLog()('Session clientId ' + clientId);
 
@@ -100,10 +105,14 @@ try {
         if (sdp) {
           x.rtcSessionDescription.sdp = sdp[1];
         }
+        
         if (callbacks[x.webrtcAction] !== undefined) {
           let action = x.webrtcAction;
           delete x.webrtcAction;
           callbacks[action](x);
+          if (action === 'onMessageReceived' && x.hello) {
+            document.getElementById('latency').innerText = 'Connected';
+          }
         } else if (x.webrtcAction == 'signal') {
           sendMessage(x.rtcSessionDescription, x.recipient);
         } else {
@@ -123,9 +132,9 @@ try {
     } catch (e) {
       console.warn('This doesn\'t look like ReactNative');
       // TODO: redirect to app store?
-      // alert('This browser is not supported. Please use Android Chrome or iOS native app.');
+      alert('This browser is not supported. Please use Android Chrome or iOS native app.');
     }
-  }, 1000);
+  }, 500);
 }
 
 // If useBridge is true, use WebViewBridge for WebRTC.
@@ -171,7 +180,7 @@ function attachListeners(socket) {
 
   socket.on('disconnected', clientId => {
     if (callbacks.onDisconnected) {
-      callbacks.onDisconnected(clientId);
+      callbacks.onDisconnected({clientId: clientId});
     }
   });
 
@@ -185,7 +194,7 @@ function attachListeners(socket) {
   // Join a room
   socket.emit('create or join', room, clientId, isHost);
 
-  if (window.location.hostname.match(/localhost|127\.0\.0/)) {
+  if (IS_LOCAL) {
     socket.emit('ipaddr');
   }
 }
@@ -300,12 +309,12 @@ function onDataChannelCreated(channel) {
 
   channel.onclose = () => {
     if (callbacks.onDisconnected) {
-      callbacks.onDisconnected(channel.label);
+      callbacks.onDisconnected({clientId: channel.label});
     }
   };
   channel.onopen = () => {
     if (callbacks.onConnected) {
-      callbacks.onConnected(channel.label);
+      callbacks.onConnected({clientId: channel.label});
     }
     if (AUTO_PING) {
       // As long as the channel is open, send a message 1/sec to

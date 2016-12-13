@@ -67,7 +67,7 @@ const CLICK_TYPES = {
   mouseup: 'touchend',
 }
 
-// Compatibility for testing.
+// Compatibility for testing or sad people.
 let mouseDown = false;
 function handleClick(e) {
   e.preventDefault();

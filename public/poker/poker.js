@@ -351,9 +351,8 @@ var render = function () {
   for (let i=0;i<ids.length;i++){
     players[ids[i]].render(ctx,i);
   }
-  rowText(ctx,xOffset,yOffset-rowHeight,columnWidth
-         ,widthList
-         ,["Turn" ,"Name" ,"Score" ,"Funds","Commit" ,"Status","Hand","Final"]);
+  rowText(ctx,xOffset,yOffset-rowHeight,columnWidth,widthList,
+          ["Turn" ,"Name" ,"Score" ,"Funds","Commit" ,"Status","Hand","Final"]);
 
   ctx.fillText("Poker", 0, 0);
   //list stages
@@ -371,7 +370,8 @@ webtendo.callbacks.onMessageReceived = function(x) {
   //x.fold does not use the controlValue
 };
 
-webtendo.callbacks.onConnected = function(id) {
+webtendo.callbacks.onConnected = function(x) {
+  let id = x.clientId;
   console.log(id, 'connected');
   if (!players[id]) {
     players[id] = new Player(id);
@@ -379,7 +379,8 @@ webtendo.callbacks.onConnected = function(id) {
   webtendo.sendToClient(id, {hello: players[id].name});
 };
 
-webtendo.callbacks.onDisconnected = function(id) {
+webtendo.callbacks.onDisconnected = function(x) {
+  let id = x.clientId;
   console.log(id, 'disconnected');
   // TODO: find out why ios disconnects. maybe just simulator?
   // delete players[id];

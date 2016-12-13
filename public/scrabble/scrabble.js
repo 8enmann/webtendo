@@ -217,7 +217,8 @@ webtendo.callbacks.onMessageReceived = function(x) {
   }
 }
 
-webtendo.callbacks.onConnected = function(id) {
+webtendo.callbacks.onConnected = function(x) {
+  let id = x.clientId;
   console.log(id + " connected");
   if (players[id]) {
     // player reconnected. give the player their hand
