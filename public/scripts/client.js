@@ -35,6 +35,16 @@ function getRegion(x, y) {
   }
 }
 
+function touchFeedback(region, type) {
+  if (region === undefined) {
+    return;
+  } else if (type === 'touchstart') {
+    region.el.style.opacity = .6;
+  } else if (type === 'touchend') {
+    region.el.style.opacity = 1;
+  }
+}
+
 function handleTouch(e) {
   e.preventDefault();
   // console.log(e);
@@ -43,21 +53,47 @@ function handleTouch(e) {
     // Any touches elsewhere while a finger is down on the joystick will
     // block input on the rest of the screen.
     let region = getRegion(touches[i].pageX, touches[i].pageY);
-    if (e.type === 'touchstart') {
-      region.el.style.opacity = .6;
-    } else if (e.type === 'touchend') {
-      region.el.style.opacity = 1;
-    }
-    if (callbacks.onTouch) {
+    touchFeedback(region, e.type);
+    if (region !== undefined && callbacks.onTouch) {
       callbacks.onTouch(e, touches[i], region.value);
     }
     // return true;
   }
 }
 
+const CLICK_TYPES = {
+  mousedown: 'touchstart',
+  mousemove: 'touchmove',
+  mouseup: 'touchend',
+}
+
+// Compatibility for testing.
+let mouseDown = false;
+function handleClick(e) {
+  e.preventDefault();
+  if (e.type === 'mousedown') {
+    mouseDown = true;
+  } else if (e.type === 'mouseup') {
+    mouseDown = false;
+  } else if (e.type === 'mousemove' && !mouseDown) {
+    return;
+  }
+  let region = getRegion(e.pageX, e.pageY);
+  // console.log(e)
+  var copy = {type: CLICK_TYPES[e.type], pageX: e.pageX, pageY: e.pageY};
+  touchFeedback(region, copy.type);
+  if (region !== undefined && callbacks.onTouch) {
+    callbacks.onTouch(copy, copy, region.value);
+  }
+}
+  
+  
 document.body.addEventListener('touchstart', handleTouch);
 document.body.addEventListener('touchmove', handleTouch);
 document.body.addEventListener('touchend', handleTouch);
+document.body.addEventListener('mousedown', handleClick);
+document.body.addEventListener('mouseup', handleClick);
+document.body.addEventListener('mousemove', handleClick);
 
 // Disable zoom on iOS 10.
 document.addEventListener('gesturestart', function (e) {
@@ -68,6 +104,9 @@ var fullscreenButton = document.getElementById('fullscreen');
 if (fullscreenButton) {
   fullscreenButton.addEventListener('touchstart', fullscreen);
   function fullscreen(e) {
+    if (!document.documentElement.webkitRequestFullScreen) {
+      return;
+    }
     document.documentElement.webkitRequestFullScreen();
     if (!screen.orientation.type.includes('landscape')) {
       screen.orientation.lock('landscape')
