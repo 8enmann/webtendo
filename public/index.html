@@ -1,54 +1,59 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-    ga('create', 'UA-88759837-1', 'auto');
-    ga('send', 'pageview');
-
-  </script>
-  <title>Webtendo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.0/gh-fork-ribbon.min.css" />
-  <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/index.css" />
+  <head>
+    <link rel="shortcut icon" type="image/x-icon" sizes="16x16" href="assets/favicon.ico">
+    <link rel="apple-touch-icon" sizes="57x57" href="assets/apple-icon-57x57.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <meta name="theme-color" content="#404040">
 
 
-</head>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-<body>
-  <a class="github-fork-ribbon" href="https://github.com/8enmann/webtendo" title="Fork me on GitHub">Fork on GitHub</a>
+      ga('create', 'UA-88759837-1', 'auto');
+      ga('send', 'pageview');
 
-  <h1>Webtendo</h1>
-  <div class="instructions">
-    <p>
-      <strong>Instructions</strong><br/>
-      On your phone and laptop, join a wifi network. Visit this site on both and ensure the room matches. If it doesn't, enter the same room name on both. On the laptop, choose a game under "Host". On a phone, choose the same game under "Player". Play!
-    </p>
-  </div>
-  <div class="room">
-    <label>Room&nbsp;<input id="room" type="text" inputmode="url"
-                            placeholder="Connecting..."/></label>
-  </div>
-  <div class="linkbox">
-    <div class="clients linklist">
-      <div class="bigbutton" href="client.html">Player</div>
-      <a data-game="spacewar" data-role="client"><span class="icon">&#128640;</span> Spacewar</a>
-      <a data-game="scrabble" data-role="client" style="display:none"><img class="icon" src="scrabble/assets/scrabble.png" /> Scrabble</a>
-      <a data-game="poker" data-role="client"><img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTATGiOk4In7CpqzNbjZA7-K7xesBF1hGoLtt4uxcTeP38LjSLl" class="icon"></img> Poker</a>
+    </script>
+    <title>Webtendo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.0/gh-fork-ribbon.min.css" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/index.css" />
+
+
+  </head>
+
+  <body>
+    <a class="github-fork-ribbon" href="https://github.com/8enmann/webtendo" title="Fork me on GitHub">Fork on GitHub</a>
+
+    <h1>Webtendo</h1>
+    <div class="instructions">
+      <p>
+        <strong>Instructions</strong><br/>
+        On your phone and laptop, join a wifi network. Visit this site on both and ensure the room matches. If it doesn't, enter the same room name on both. On the laptop, choose a game under "Host". On a phone, choose the same game under "Player". Play!
+      </p>
     </div>
-    <div class="hosts linklist">
-      <div class="bigbutton" href="host.html">Host</div>
-      <a data-game="spacewar" data-role="host"><span class="icon">&#128640;</span> Spacewar</a>
-      <a data-game="scrabble" data-role="host" style="display:none"><img class="icon" src="scrabble/assets/scrabble.png" /> Scrabble</a>
-      <a data-game="poker" data-role="host"><img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTATGiOk4In7CpqzNbjZA7-K7xesBF1hGoLtt4uxcTeP38LjSLl" class="icon"></img> Poker</a>
+    <div class="room">
+      <label>Room&nbsp;<input id="room" type="text" inputmode="url"
+                              placeholder="Connecting..."/></label>
     </div>
-  </div>
-</body>
-<script src="../out/index-bundle.js"></script>
+    <div class="linkbox">
+      <div class="clients linklist">
+        <div class="bigbutton" href="client.html">Player</div>
+        <a data-game="spacewar" data-role="client"><span class="icon">&#128640;</span> Spacewar</a>
+        <a data-game="scrabble" data-role="client" style="display:none"><img class="icon" src="scrabble/assets/scrabble.png" /> Scrabble</a>
+        <a data-game="poker" data-role="client"><img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTATGiOk4In7CpqzNbjZA7-K7xesBF1hGoLtt4uxcTeP38LjSLl" class="icon"></img> Poker</a>
+      </div>
+      <div class="hosts linklist">
+        <div class="bigbutton" href="host.html">Host</div>
+        <a data-game="spacewar" data-role="host"><span class="icon">&#128640;</span> Spacewar</a>
+        <a data-game="scrabble" data-role="host" style="display:none"><img class="icon" src="scrabble/assets/scrabble.png" /> Scrabble</a>
+        <a data-game="poker" data-role="host"><img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTATGiOk4In7CpqzNbjZA7-K7xesBF1hGoLtt4uxcTeP38LjSLl" class="icon"></img> Poker</a>
+      </div>
+    </div>
+  </body>
+  <script src="../out/index-bundle.js"></script>
 </html>
