@@ -28,6 +28,35 @@ var names = ["Gabble Scream",
             ];
 var currentPosition = {x: 7, y: 7};
 
+var letterToPointsMap = {
+    'E': 1,
+    'A': 1,
+    'I': 1,
+    'O': 1,
+    'N': 1,
+    'R': 1,
+    'T': 1,
+    'L': 1,
+    'S': 1,
+    'U': 1,
+    'D': 2,
+    'G': 2,
+    'B': 3,
+    'C': 3,
+    'M': 3,
+    'P': 3,
+    'F': 4,
+    'H': 4,
+    'V': 4,
+    'W': 4,
+    'Y': 4,
+    'K': 5,
+    'J': 8,
+    'X': 8,
+    'Q': 10,
+    'Z': 10,
+};
+
 function initScrabbleBag() {
   var scrabbleFrequencies = {
     'E': 12,
@@ -287,19 +316,128 @@ function renderBoard() {
   }
   // TODO stroke currently played words.
   _.each(currentlyPlayedPositions, function(position) {
-    renderSquare(position, "yellow", undefined);
+    renderSquare(position, "yellow", board[position.x][position.y]);
   });
 
   // stroke current position
   renderSquare(currentPosition, "red", undefined);
 }
 
-function renderSquare(position, strokeColor, letter) {
+var TILE_TYPES = {
+  REGULAR: {name: null},
+  DOUBLE_LETTER: {positions: [{x: 3, y: 0},
+                              {x: 0, y: 3},
+                              {x: 11, y: 0},
+                              {x: 14, y: 3},
+                              {x: 0, y: 11},
+                              {x: 14, y: 11},
+                              {x: 3, y: 14},
+                              {x: 11, y: 14},
+                              {x: 6, y: 2},
+                              {x: 8, y: 2},
+                              {x: 7, y: 3},
+                              {x: 2, y: 6},
+                              {x: 2, y: 8},
+                              {x: 3, y: 7},
+                              {x: 6, y: 12},
+                              {x: 8, y: 12},
+                              {x: 7, y: 11},
+                              {x: 12, y: 6},
+                              {x: 12, y: 8},
+                              {x: 13, y: 7},
+                              {x: 6, y: 6},
+                              {x: 6, y: 8},
+                              {x: 8, y: 6},
+                              {x: 8, y: 8},
+                              ],
+                  bg_color: "#a0aec8",
+                  name: "DOUBLE LETTER SCORE"},
+  DOUBLE_WORD: {positions: [{x: 1, y: 1},
+                            {x: 2, y: 2},
+                            {x: 3, y: 3},
+                            {x: 4, y: 4},
+                            {x: 13, y: 1},
+                            {x: 12, y: 2},
+                            {x: 11, y: 3},
+                            {x: 10, y: 4},
+                            {x: 13, y: 13},
+                            {x: 12, y: 12},
+                            {x: 11, y: 11},
+                            {x: 10, y: 10},
+                            {x: 1, y: 13},
+                            {x: 2, y: 12},
+                            {x: 3, y: 11},
+                            {x: 4, y: 10}],
+                bg_color: "#e2f5ff",
+                name: "DOUBLE WORD SCORE"},
+  TRIPLE_LETTER: {positions: [{x: 1, y: 5},
+                              {x: 1, y: 9},
+                              {x: 13, y: 5},
+                              {x: 13, y: 9},
+                              {x: 5, y: 1},
+                              {x: 9, y: 1},
+                              {x: 5, y: 13},
+                              {x: 9, y: 13},
+                              {x: 5, y: 5},
+                              {x: 5, y: 9},
+                              {x: 9, y: 5},
+                              {x: 9, y: 9}],
+                  bg_color: "#7199b0",
+                  name: "TRIPLE LETTER SCORE"},
+  TRIPLE_WORD: {positions: [{x: 0, y: 0},
+                            {x: 0, y: 7},
+                            {x: 0, y: 14},
+                            {x: 7, y: 0},
+                            {x: 7, y: 14},
+                            {x: 14, y: 0},
+                            {x: 14, y: 7},
+                            {x: 14, y: 14}],
+                bg_color: "#d07b7b",
+                name: "TRIPLE WORD SCORE"},
+}
+
+function getTileType(position) {
+  var tileTypes = Object.keys(TILE_TYPES);
+  for (var i = 0; i < tileTypes.length; i++) {
+    var type = TILE_TYPES[tileTypes[i]];
+    if (!_.isUndefined(type.positions) && _.some(type.positions, function(p) {
+      return position.x == p.x && position.y == p.y;
+    })) {
+      return type;
+    }
+  }
+  // default..
+  return TILE_TYPES.REGULAR;
+}
+
+function renderSquare(position, edgeStyle, letter) {
+  var tileType = getTileType(position);
   if (!_.isUndefined(letter) && !_.isNull(letter)) {
+    // black background
+    ctx.fillStyle = "black";
+    ctx.fillRect(offsetX + 40 * position.x + 10 + 1, 40 * position.y + 10 + 1, 38, 38);
     // render the character
     ctx.font = "18px Courier New";
     ctx.fillStyle = "white";
     ctx.fillText(letter, offsetX + 40 * position.x + 24 + 1, 40 * position.y + 13 + 1);
+
+    ctx.font = "12px Courier New";
+    ctx.fillStyle = "white";
+    ctx.fillText(letterToPointsMap[letter], offsetX + 40 * position.x + 24 + 1, 40 * position.y + 33 + 1);
+  } else if (tileType == TILE_TYPES.REGULAR) {
+    ctx.fillStyle = "#fae8dc";
+    ctx.fillRect(offsetX + 40 * position.x + 10 + 1, 40 * position.y + 10 + 1, 38, 38);
+  } else {
+    ctx.fillStyle = tileType.bg_color;
+    ctx.fillRect(offsetX + 40 * position.x + 10 + 1, 40 * position.y + 10 + 1, 38, 38);
+
+    ctx.font = "10px Courier New";
+    ctx.fillStyle = "black";
+    var words = tileType.name.split(' ');
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i];
+      ctx.fillText(w, offsetX + 40 * position.x + 10 + 1, 40 * position.y + 13 + 10 * i + 1);
+    }
   }
   ctx.beginPath();
   ctx.moveTo(offsetX + 40 * position.x + 10, 40 * position.y + 10);
@@ -308,7 +446,7 @@ function renderSquare(position, strokeColor, letter) {
   ctx.lineTo(offsetX + 40 * position.x + 10, 40 * position.y + 10 + 40);
   ctx.lineTo(offsetX + 40 * position.x + 10, 40 * position.y + 10);
   ctx.closePath();
-  ctx.strokeStyle = strokeColor;
+  ctx.strokeStyle = edgeStyle;
   ctx.stroke();
 }
 
