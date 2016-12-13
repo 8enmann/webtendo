@@ -74,3 +74,5 @@ webtendo.callbacks.onMessageReceived = function(x) {
     document.getElementById('hand').innerText = x.handText;
   }
 }
+
+client.checkOrientation();
