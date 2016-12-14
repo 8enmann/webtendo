@@ -45,7 +45,7 @@ client.sendToHost(obj);
 * Send a pull request! Once it's in I'll deploy for you.
 
 ## Features
-- [x] Signaling server + WebRTC
+- [x] Signaling server + WebRTC transport
 - [x] Send data directly between local network devices
 - [x] Performance analysis
 - [x] Master/slave mode
@@ -57,7 +57,7 @@ client.sendToHost(obj);
 - [x] Game selection
 - [x] Automatic/manual room determination based on external IP
 - [x] Native client (at 8enmann/WebtendoClient)
-- [x] autotrack.js integration
+- [x] Analytics
 - [ ] Game rating
 
 

@@ -22,23 +22,11 @@
 <body>
   <canvas id="canvas"></canvas>
   <div class="bottomleft">
-    <div id="mute" class="mute">MUTE</div>
     <div id="latency"></div>
     <div id="ip"></div>
   </div>
 
-
-  <audio id="audio" src="assets/ideetje.mp3" autoplay loop muted>
-    Your browser does not support the <code>audio</code> element.
-  </audio>
-
   <script src="../out/poker-host-bundle.js"></script>
-  <script>
-    document.getElementById('mute').addEventListener('mousedown', e => {
-      var a = document.getElementById('audio');
-      a.muted = !a.muted;
-    });
-  </script>
 </body>
 
 </html>

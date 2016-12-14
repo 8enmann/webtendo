@@ -5,6 +5,15 @@
     <link rel="apple-touch-icon" sizes="57x57" href="assets/apple-icon-57x57.png">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
     <meta name="theme-color" content="#404040">
+    <meta property="og:url"           content="https://webtendo.herokuapp.com/" />
+	  <meta property="og:type"          content="website" />
+	  <meta property="og:title"         content="Webtendo" />
+	  <meta property="og:description"   content="Open source internet game console. Play against your friends in person!" />
+    <!-- TODO: 1200 x 630 image -->
+	  <meta property="og:image"         content="https://webtendo.herokuapp.com/assets/hero.png" />
+	  <meta property="og:image:width"   content="1200" />
+	  <meta property="og:image:height"  content="630" />
+	  <meta property="og:app_id"        content="853878414755051" />
 
 
     <script>
@@ -54,6 +63,28 @@
         <a data-game="poker" data-role="host"><img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTATGiOk4In7CpqzNbjZA7-K7xesBF1hGoLtt4uxcTeP38LjSLl" class="icon"></img> Poker</a>
       </div>
     </div>
+	  <div id="fb-root"></div>
+    <div class="share-box">
+      <a href="https://twitter.com/share" class="twitter-share-button" data-size="large" data-text="I&#39;m playing #webtendo! Try it!" data-show-count="false" data-url="https://webtendo.herokuapp.com">Tweet</a>
+      <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+      <div class="fb-share-button" data-href="https://webtendo.herokuapp.com"
+           data-layout="button" data-size="large" data-mobile-iframe="true">
+        <a class="fb-xfbml-parse-ignore" target="_blank" 
+           href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse">
+          Share
+        </a>
+      </div>
+    </div>
+    
   </body>
   <script src="../out/index-bundle.js"></script>
+	<!-- Load Facebook SDK for JavaScript -->
+  <script>(function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.8&appId=853878414755051";
+    fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));</script>
+
 </html>
