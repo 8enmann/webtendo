@@ -241,7 +241,7 @@ function update(modifier) {
   for (var i = bullets.length - 1; i >= 0; i--) {
     bullets[i].update(modifier, i);
   }
-  Object.values(players).forEach((player: any) => player.update(modifier));
+  Object.keys(players).forEach((id: string) => players[id].update(modifier));
   stars.forEach(star => star.update(modifier));
 }
 
@@ -273,7 +273,7 @@ var render = function () {
 
   stars.forEach(star => star.render(ctx));
   bullets.forEach(bullet => bullet.render(ctx));
-  Object.values(players).forEach((player: any) => player.render(ctx));
+  Object.keys(players).forEach((id: string) => players[id].render(ctx));
 
   // Scoreboard
   ctx.fillStyle = "white";
@@ -281,7 +281,8 @@ var render = function () {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   // Wow I'm lazy.
-  ctx.fillText(JSON.stringify(Object.values(players).map((player: any) =>`${player.color}:${player.score}`)), 0, 0);
+  ctx.fillText(JSON.stringify(Object.keys(players).map(
+    (id: string) =>`${players[id].color}:${players[id].score}`)), 0, 0);
 };
 
 webtendo.callbacks.onMessageReceived = function(x) {
