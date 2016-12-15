@@ -338,31 +338,35 @@ webtendo.callbacks.onDisconnected = function(x) {
 };
 
 (function init() {
-  //initialize deck of cards
-  //deck = new Deck();
-  //draw = deck.drawCard();
-  //console.log(draw.toString());
-  
-  //test the hand sorting and evaluation
-  //var app.sharedHand = new Hand([new Card(8,0),new Card(7,2),new Card(8,2),new Card(9,2),new Card(11,2)]);
-  //var playerHand = new Hand([new Card(10,2),new Card(12,2)]);
-  //var combinedHand = playerHand.addSharedCards(app.sharedHand);
-  //console.log(playerHand.toString());
-  //console.log(app.sharedHand.toString());
-  //console.log(combinedHand.toString());
-  //console.log(hand);
-  //var sets = hand.combinations();
-  //for(let set of sets){
-  //  console.log(set.toString());
-  //}
-  //console.log(combinedHand.getBestHand().toString());
+  //autorun();
   //start game loop
-  var hand1 = new Hand([new Card(8,0),new Card(8,1),new Card(7,0),new Card(12,2),new Card(10,2)]);
-  var hand2 = new Hand([new Card(9,0),new Card(9,1),new Card(7,0),new Card(11,2),new Card(10,2)]);
-  //hand1.assessFiveCardHand();
-  //hand2.assessFiveCardHand();
-  //console.log(hand1.toLine());
-  //console.log(hand2.toLine());
   then = Date.now();
   main();
 })();
+
+function autorun() {
+  //initialize deck of cards
+  deck = new Deck();
+  draw = deck.drawCard();
+  console.log(draw.toString());
+  
+  //test the hand sorting and evaluation
+  app.sharedHand = new Hand([new Card(8,0),new Card(7,2),new Card(8,2),new Card(9,2),new Card(11,2)]);
+  var playerHand = new Hand([new Card(10,2),new Card(12,2)]);
+  var combinedHand = playerHand.addSharedCards(app.sharedHand);
+  console.log(playerHand.toString());
+  console.log(app.sharedHand.toString());
+  console.log(combinedHand.toString());
+  console.log(hand);
+  var sets = hand.combinations();
+  for(let set of sets){
+    console.log(set.toString());
+  }
+  console.log(combinedHand.getBestHand().toString());
+  var hand1 = new Hand([new Card(8,0),new Card(8,1),new Card(7,0),new Card(12,2),new Card(10,2)]);
+  var hand2 = new Hand([new Card(9,0),new Card(9,1),new Card(7,0),new Card(11,2),new Card(10,2)]);
+  hand1.assessFiveCardHand();
+  hand2.assessFiveCardHand();
+  console.log(hand1.toLine());
+  console.log(hand2.toLine());
+}
