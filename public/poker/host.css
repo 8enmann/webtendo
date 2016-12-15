@@ -1,9 +1,6 @@
 body {
     height: 100vh;
 }
-canvas {
-    display: none;
-}
 .bottomleft {
     opacity: .5;
     position: absolute;

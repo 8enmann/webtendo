@@ -4,25 +4,18 @@ import {Card,Hand,Deck} from './libpoker';
 import Vue from 'vue';
 
 var then;
-var ctx;
 var names = ['Phillips','Ahaltimof','Fghulds','Argyle','Angalope','Goofball','Lumpy','Beefsteak','Strongarm'];
 var currentPlayerIndex = 0;
 var currentBigBlindIndex = 0;
-var canvas;
-var columnWidth = 100;
-var rowHeight = 24;
-var yOffset = rowHeight*5;
-var xOffset = rowHeight;
-var widthList = [0.75,2,1,1,1,1,1,1,1,1,1,1,1];
 var revealHand = false;
-var stages = ['Deal','Bet','3','Bet','1','Bet','1','Bet','Reveal','Post','Reset'];
+const stages = ['Deal','Bet','3','Bet','1','Bet','1','Bet','Reveal','Post','Reset'];
 var deck = new Deck();
 var bigBlindIndex = 0;
 var lastMessageDate = 0;
 const STARTING_MONEY = 200;
 const AUTO_BETTING = false;
 
-var app = new Vue({
+let app = new Vue({
   el: '#app',
   data: {
     stages: stages,
@@ -47,28 +40,6 @@ class Player {
     this.id = id;
     this.recentWinnings = 0;
     this.lastTurnMessage = 0;
-  }
-
-  render(ctx,playerIndex) {
-    
-    let verticalPosition = rowHeight*playerIndex+yOffset
-    rowText(ctx,xOffset,verticalPosition,columnWidth
-           ,widthList
-           ,[playerIndex==currentPlayerIndex?">":""
-            ,this.name
-            ,this.score
-            ,(stages[app.currentStageIndex]=='Post')?this.summarizeFunds():this.money
-            ,this.committedBet
-            ,this.folded?'Fold':'In'
-            ,(stages[app.currentStageIndex]=='Post')?this.hand.toString():'??'//todo: show hand only if winnings >0 or you raised most recently
-            ,this.finalHand.toLine()
-           ]);
-  }
-  summarizeFunds(){
-    if(this.recentWinnings>0)
-      return this.money+"+"+this.recentWinnings
-    else
-      return this.money
   }
   notDoneBetting(currentHighestBet){
     return (!this.finishedBetting(currentHighestBet))&&this.canBet();
@@ -102,14 +73,6 @@ class Player {
       this.folded = true;
       delete this.fold//clear the fold command
     }
-  }
-}
-
-function rowText(ctx,xStart,yPosition,xIncrement,relativeWidths,textList){
-  let xPosition = xStart;
-  for(let i=0;i<textList.length;i++){
-    ctx.fillText(textList[i],xPosition,yPosition);
-    xPosition+=xIncrement*relativeWidths[i];
   }
 }
 
@@ -334,12 +297,11 @@ function main() {
   var delta = now - then;
 
   update(delta / 1000);
-  render();
 
   then = now;
 
-  // Request to do this again ASAP
-  setTimeout(function(){requestAnimationFrame(main)},100);
+  // Request to do this again in 100 ms (10 Hz).
+  window.setTimeout(main.bind(this),100);
 };
 
 function getHighestBet(){
@@ -350,32 +312,6 @@ function getHighestBet(){
   }
   return currentHighestBet;
 }
-
-// Draw everything
-var render = function () {
-  // Clear
-  ctx.fillStyle = 'black';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  // Scoreboard
-  ctx.fillStyle = "white";
-  ctx.font = "24px Courier New";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "top";
-  let ids = Object.keys(app.players);
-  for (let i=0;i<ids.length;i++){
-    app.players[ids[i]].render(ctx,i);
-  }
-  rowText(ctx,xOffset,yOffset-rowHeight,columnWidth,widthList,
-          ["Turn" ,"Name" ,"Score" ,"Funds","Commit" ,"Status","Hand","Final"]);
-
-  ctx.fillText("Poker", 0, 0);
-  //list stages
-  rowText(ctx,rowHeight*5,0,rowHeight*4,[1,1,1,1,1,1,1,1,1,1],stages);
-  rowText(ctx,rowHeight*5+app.currentStageIndex*rowHeight*4,rowHeight,rowHeight*4,[1],["^"]);//indicate current stage
-  //show shared cards
-  ctx.fillText("Shared Cards: "+app.sharedHand.toString(),0,rowHeight*2);
-};
 
 webtendo.callbacks.onMessageReceived = function(x) {
   //console.log(x);
@@ -402,16 +338,6 @@ webtendo.callbacks.onDisconnected = function(x) {
 };
 
 (function init() {
-  //set up canvas
-  canvas = document.getElementById('canvas');
-  ctx = canvas.getContext("2d");
-  // Awful hack from stackoverflow to increase canvas resolution.
-  const ratio = window.devicePixelRatio, w = canvas.offsetWidth, h = canvas.offsetHeight;
-  canvas.width = w * ratio;
-  canvas.height = h * ratio;
-  canvas.style.width = w + "px";
-  canvas.style.height = h + "px";
-  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   //initialize deck of cards
   //deck = new Deck();
   //draw = deck.drawCard();
