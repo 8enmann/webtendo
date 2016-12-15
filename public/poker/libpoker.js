@@ -60,6 +60,9 @@ export class Hand {
     }
     return outStr;
   }
+  getHandTypeString() {
+    return handTypes[this.handType];
+  }
   toLine(){
     return this.toString()+" "+handTypes[this.handType]+" "+this.handValue;
   }

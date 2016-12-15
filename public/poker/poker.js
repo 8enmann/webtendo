@@ -1,11 +1,11 @@
 'use strict';
 import * as webtendo from '../scripts/webtendo';
 import {Card,Hand,Deck} from './libpoker';
-//by Max Mann
+import Vue from 'vue';
+
 var then;
 var ctx;
-var players = {};//dict
-var names = ['Phillips','Ahaltimof','Fghulds','Argyle','Angalope','Goofball','Lumpy','Beefsteak','Strongarm'];//list
+var names = ['Phillips','Ahaltimof','Fghulds','Argyle','Angalope','Goofball','Lumpy','Beefsteak','Strongarm'];
 var currentPlayerIndex = 0;
 var currentBigBlindIndex = 0;
 var canvas;
@@ -16,13 +16,22 @@ var xOffset = rowHeight;
 var widthList = [0.75,2,1,1,1,1,1,1,1,1,1,1,1];
 var revealHand = false;
 var stages = ['Deal','Bet','3','Bet','1','Bet','1','Bet','Reveal','Post','Reset'];
-var currentStageIndex = 0;
 var deck = new Deck();
-var sharedHand = new Hand([]);
 var bigBlindIndex = 0;
 var lastMessageDate = 0;
 const STARTING_MONEY = 200;
 const AUTO_BETTING = false;
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    stages: stages,
+    currentStageIndex: 0,
+    players: {},
+    currentPlayerId: undefined,
+    sharedHand: new Hand([]),
+  },
+});
 
 class Player {
   //commit: number;
@@ -48,10 +57,10 @@ class Player {
            ,[playerIndex==currentPlayerIndex?">":""
             ,this.name
             ,this.score
-            ,(stages[currentStageIndex]=='Post')?this.summarizeFunds():this.money
+            ,(stages[app.currentStageIndex]=='Post')?this.summarizeFunds():this.money
             ,this.committedBet
             ,this.folded?'Fold':'In'
-            ,(stages[currentStageIndex]=='Post')?this.hand.toString():'??'//todo: show hand only if winnings >0 or you raised most recently
+            ,(stages[app.currentStageIndex]=='Post')?this.hand.toString():'??'//todo: show hand only if winnings >0 or you raised most recently
             ,this.finalHand.toLine()
            ]);
   }
@@ -105,13 +114,16 @@ function rowText(ctx,xStart,yPosition,xIncrement,relativeWidths,textList){
 }
 
 function update(modifier) {
-  let ids = Object.keys(players);//get a list of player ids
-  if(ids.length==0)
+  let ids = Object.keys(app.players);//get a list of player ids
+  if(ids.length==0) {
     currentPlayerIndex=0;
-  else
-    currentPlayerIndex = currentPlayerIndex%ids.length;//wrap current player index
+    app.currentPlayerId = undefined;
+  } else {
+    currentPlayerIndex = currentPlayerIndex % ids.length;//wrap current player index
+    app.currentPlayerId = ids[currentPlayerIndex];
+  }
   
-  let currentPlayer = players[ids[currentPlayerIndex]];
+  let currentPlayer = app.players[app.currentPlayerId];
   if(currentPlayer!==undefined){
     if(AUTO_BETTING){
       if(currentPlayer.name=='Beefsteak'){//||currentPlayer.name=='Strongarm'){
@@ -124,7 +136,7 @@ function update(modifier) {
     if(Date.now()-lastMessageDate>500){
       webtendo.broadcast({whoseTurn:currentPlayer.name, minimumBid:getHighestBet()});//send message to the next player saying it's his turn
       //also send all players their hands
-      Object.values(players).forEach(player=> {
+      Object.values(app.players).forEach(player=> {
         webtendo.sendToClient(player.id,{handText : player.hand.toString()})
       });
       lastMessageDate = Date.now();
@@ -132,11 +144,11 @@ function update(modifier) {
   }
   //check the game phase
   //deal -> get new deck and deal two cards to each player
-  if(stages[currentStageIndex]=='Deal'){
+  if(stages[app.currentStageIndex]=='Deal'){
     //a new deck is made on host start and after reveal
     //deal two cards to each player that does not have cards
     for(let i=0;i<ids.length;i++){
-      let player = players[ids[i]];
+      let player = app.players[ids[i]];
       if(player.hand.cards.length==0){
         player.hand=new Hand([deck.drawCard(),deck.drawCard()])
         if(i==bigBlindIndex){
@@ -149,15 +161,15 @@ function update(modifier) {
     //wait for more players. A bet commit advances to the next stage.
     if(ids.length>1){//if there are at least two players
       if(currentPlayer.commit!==undefined||currentPlayer.fold!==undefined){//see if the current player has committed
-        currentStageIndex++;
+        app.currentStageIndex++;
       }
     }
-  }else if(stages[currentStageIndex]=='Bet'){
+  }else if(stages[app.currentStageIndex]=='Bet'){
     let currentHighestBet = getHighestBet();
     //check if all players have bet, or folded, or have no hand
     let howManyNotDoneBetting = 0;
     let stillInGame = 0;
-    Object.values(players).forEach(function(player){
+    Object.values(app.players).forEach(function(player){
       if(player.notDoneBetting(currentHighestBet))howManyNotDoneBetting++;
       if(player.canBet())stillInGame++;
     });
@@ -168,13 +180,15 @@ function update(modifier) {
     }
     if(howManyNotDoneBetting==0){
       //set who is betting first next round
-      if(currentStageIndex==1){//in the first betting round, the big blind 
+      if(app.currentStageIndex==1){//in the first betting round, the big blind 
         currentPlayerIndex = bigBlindIndex + 1;
+        app.currentPlayerId = ids[currentPlayerIndex];
       }else{
-        currentPlayerIndex = (bigBlindIndex - 1+ids.length)%ids.length;//the little blind is big blind index -1
+        currentPlayerIndex = (bigBlindIndex - 1 + ids.length) % ids.length;//the little blind is big blind index -1
+        app.currentPlayerId = ids[currentPlayerIndex];
       }
-      currentStageIndex++;//move to next phase
-      Object.values(players).forEach(function(player){player.betAlready=false});//reset 'already bet' flags
+      app.currentStageIndex++;//move to next phase
+      Object.values(app.players).forEach(function(player){player.betAlready=false});//reset 'already bet' flags
     }else{
       //todo: setTimeout to limit player betting time
       //process commit from current player
@@ -186,21 +200,22 @@ function update(modifier) {
     //skip a player who is all-in, or folded, or done (somehow)
     if(!currentPlayer.notDoneBetting(currentHighestBet)){
       currentPlayerIndex++;
+      app.currentPlayerId = ids[currentPlayerIndex];
     }
-  }else if(stages[currentStageIndex]=='3'||stages[currentStageIndex]=='1'){
+  }else if(stages[app.currentStageIndex]=='3'||stages[app.currentStageIndex]=='1'){
     //reveal some cards
     let newCards = [];
-    for(let i=0;i<Number(stages[currentStageIndex]);i++){
+    for(let i=0;i<Number(stages[app.currentStageIndex]);i++){
       newCards.push(deck.drawCard());
     }
-    sharedHand = sharedHand.cloneAndCombine(new Hand(newCards));
-    currentStageIndex++;//advance to next stage
-  }else if(stages[currentStageIndex]=='Reveal'){
+    app.sharedHand = app.sharedHand.cloneAndCombine(new Hand(newCards));
+    app.currentStageIndex++;//advance to next stage
+  }else if(stages[app.currentStageIndex]=='Reveal'){
     determineWinners();
-  }else if(stages[currentStageIndex]=='Reset'){
+  }else if(stages[app.currentStageIndex]=='Reset'){
     let onePlayerHasNoMoney = false;
     //dump recent winnings into money
-    Object.values(players).forEach(function(player){
+    Object.values(app.players).forEach(function(player){
       player.money += player.recentWinnings;
       player.recentWinnings = 0;
       if(player.money==0)onePlayerHasNoMoney = true;
@@ -210,7 +225,7 @@ function update(modifier) {
     });
     //if any one player has zero money, dump money into score and reset money
     if(onePlayerHasNoMoney){
-      Object.values(players).forEach(player => {
+      Object.values(app.players).forEach(player => {
         player.score += player.money;
         player.money = STARTING_MONEY;
       });
@@ -219,14 +234,14 @@ function update(modifier) {
     //reset the deck
     deck = new Deck();
     //clear the shared cards
-    sharedHand = new Hand([]);
-    currentStageIndex=0;
+    app.sharedHand = new Hand([]);
+    app.currentStageIndex=0;
     //advance the big blind
     bigBlindIndex = (bigBlindIndex+1)%ids.length;
-  }else if (stages[currentStageIndex]=='Post'){
+  }else if (stages[app.currentStageIndex]=='Post'){
     //wait for a player to push commit to move to the next betting round
     if(currentPlayer.commit!==undefined){
-      currentStageIndex++;
+      app.currentStageIndex++;
       delete currentPlayer.commit;
     }
   }
@@ -271,9 +286,9 @@ function allCommittedBetsAreZero(players){
 function determineWinners(){
   //determine who has the best hand
   let playerList = [];//prepare to sort players by hand quality
-  Object.values(players).forEach(function(player){//get each player's best possible hand
+  Object.values(app.players).forEach(function(player){//get each player's best possible hand
     if(player.folded==false&&player.hand.cards.length>0){//you can only win if you have been dealt a hand and have not folded
-      let combinedHand = player.hand.cloneAndCombine(sharedHand);
+      let combinedHand = player.hand.cloneAndCombine(app.sharedHand);
       let bestHand = combinedHand.getBestHand();
       player.finalHand = bestHand;
       playerList.push(player)
@@ -309,8 +324,8 @@ function determineWinners(){
   for(let player of playerList)
     player.recentWinnings = Math.floor(player.recentWinnings);
   //go to next stage
-  currentStageIndex++;
-  //setTimeout(function(){currentStageIndex++;},6000);//wait a bit so people can see the result
+  app.currentStageIndex++;
+  //setTimeout(function(){app.currentStageIndex++;},6000);//wait a bit so people can see the result
 }
 
 // The main game loop
@@ -330,7 +345,7 @@ function main() {
 function getHighestBet(){
   //find the minimum bet
   let currentHighestBet = 0;
-  for(let player of Object.values(players)) {
+  for(let player of Object.values(app.players)) {
     currentHighestBet=Math.max(currentHighestBet,player.committedBet);
   }
   return currentHighestBet;
@@ -347,9 +362,9 @@ var render = function () {
   ctx.font = "24px Courier New";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  let ids = Object.keys(players);
+  let ids = Object.keys(app.players);
   for (let i=0;i<ids.length;i++){
-    players[ids[i]].render(ctx,i);
+    app.players[ids[i]].render(ctx,i);
   }
   rowText(ctx,xOffset,yOffset-rowHeight,columnWidth,widthList,
           ["Turn" ,"Name" ,"Score" ,"Funds","Commit" ,"Status","Hand","Final"]);
@@ -357,14 +372,14 @@ var render = function () {
   ctx.fillText("Poker", 0, 0);
   //list stages
   rowText(ctx,rowHeight*5,0,rowHeight*4,[1,1,1,1,1,1,1,1,1,1],stages);
-  rowText(ctx,rowHeight*5+currentStageIndex*rowHeight*4,rowHeight,rowHeight*4,[1],["^"]);//indicate current stage
+  rowText(ctx,rowHeight*5+app.currentStageIndex*rowHeight*4,rowHeight,rowHeight*4,[1],["^"]);//indicate current stage
   //show shared cards
-  ctx.fillText("Shared Cards: "+sharedHand.toString(),0,rowHeight*2);
+  ctx.fillText("Shared Cards: "+app.sharedHand.toString(),0,rowHeight*2);
 };
 
 webtendo.callbacks.onMessageReceived = function(x) {
   //console.log(x);
-  let player = players[x.clientId];
+  let player = app.players[x.clientId];
   player[x.controlName]=x.controlValue;//expects x.commit and x.fold
   //x.commit carries a controlValue which is the next bet amount
   //x.fold does not use the controlValue
@@ -373,10 +388,10 @@ webtendo.callbacks.onMessageReceived = function(x) {
 webtendo.callbacks.onConnected = function(x) {
   let id = x.clientId;
   console.log(id, 'connected');
-  if (!players[id]) {
-    players[id] = new Player(id);
+  if (!app.players[id]) {
+    app.$set(app.players, id, new Player(id));
   }
-  webtendo.sendToClient(id, {hello: players[id].name});
+  webtendo.sendToClient(id, {hello: app.players[id].name});
 };
 
 webtendo.callbacks.onDisconnected = function(x) {
@@ -403,11 +418,11 @@ webtendo.callbacks.onDisconnected = function(x) {
   //console.log(draw.toString());
   
   //test the hand sorting and evaluation
-  //var sharedHand = new Hand([new Card(8,0),new Card(7,2),new Card(8,2),new Card(9,2),new Card(11,2)]);
+  //var app.sharedHand = new Hand([new Card(8,0),new Card(7,2),new Card(8,2),new Card(9,2),new Card(11,2)]);
   //var playerHand = new Hand([new Card(10,2),new Card(12,2)]);
-  //var combinedHand = playerHand.addSharedCards(sharedHand);
+  //var combinedHand = playerHand.addSharedCards(app.sharedHand);
   //console.log(playerHand.toString());
-  //console.log(sharedHand.toString());
+  //console.log(app.sharedHand.toString());
   //console.log(combinedHand.toString());
   //console.log(hand);
   //var sets = hand.combinations();

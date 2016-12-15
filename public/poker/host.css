@@ -2,17 +2,62 @@ body {
     height: 100vh;
 }
 canvas {
-    height: 100%;
-    width: 100%;
+    display: none;
 }
 .bottomleft {
     opacity: .5;
     position: absolute;
     bottom: 0;
 }
-.mute {
-    background-color: white;
-    display: inline-block;
-    color: black;
-    padding: 2px;
+
+.player {
+    font-size: 1.3em;
 }
+
+.player.showdown {
+    font-size: 1.3em;
+}
+
+.player.active {
+    background-color: #03a9f4;
+}
+.player.fold {
+    color: gray;
+}
+
+.player.win {
+    background-color: #4CAF50;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+}
+
+.table > * {
+    flex: 1;
+    padding: 3px;
+}
+
+.community-cards {
+    align-items: center;
+    justify-content: center;
+    margin: 1em;
+}
+
+.community-cards > * {
+    /* border: 1px solid white; */
+    font-size: 3em;
+    /* margin-left: 3px; */
+    margin-right: .3em;
+    /* padding: 3px; */
+}
+
+.undealt {
+    /* border: 1px dotted white; */
+}
+
+.header > * {
+    text-transform: uppercase;
+}
+

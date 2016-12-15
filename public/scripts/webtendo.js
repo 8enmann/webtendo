@@ -43,7 +43,7 @@ export const IS_LOCAL = window.location.hostname.match(/localhost|127\.0\.0/);
 
 // Measure latency at 1Hz.
 const AUTO_PING = false;
-const VERBOSE = true;
+const VERBOSE = false;
 
 /****************************************************************************
  * Initial setup

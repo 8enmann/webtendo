@@ -21,5 +21,10 @@ module.exports = {
       loader: 'babel-loader'
     }
     ]
+  },
+  resolve: {
+    alias: {
+      'vue$': 'vue/dist/vue.common.js'
+    }
   }
 };

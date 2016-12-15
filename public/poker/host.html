@@ -20,6 +20,61 @@
 </head>
 
 <body>
+  <div id="app">
+    <h1 v-if="!Object.keys(players).length">Waiting for players</h1>
+    <div v-else>
+      <div class="row community-cards">
+        <!-- Always show 5 items -->
+        <div v-for="card in sharedHand.cards">
+          {{card.toString()}}
+        </div>
+        <div class="undealt" v-for="n in 5-sharedHand.cards.length">
+          ??
+        </div>
+        
+      </div>
+      <!-- Active play -->
+      <div v-if="stages[currentStageIndex] != 'Post'">
+        <!-- header -->
+        <div class="table row header">
+          <div>Name</div>
+          <div>Cash</div>
+          <div>Chips</div>
+          <div>Bet</div>
+        </div>
+        <!-- table body -->
+        <div class="table row player"
+             v-bind:class="{fold: player.folded, active: player.id == currentPlayerId }"
+             v-for="player in players">
+          <div>{{player.name}}</div>
+          <div>${{player.score}}</div>
+          <div>${{player.money}}</div>
+          <div>${{player.committedBet}}</div>
+        </div>
+      </div>
+      <!-- Showdown -->
+      <div v-else>
+        <!-- header -->
+        <div class="table row header">
+          <div>Name</div>
+          <div>Split</div>
+          <div>Cards</div>
+          <div>Hand</div>
+          <div>Hand</div>
+        </div>
+        <!-- table body -->
+        <div class="table row player showdown"
+             v-bind:class="{fold: player.folded, win: player.recentWinnings}"
+             v-for="player in players">
+          <div>{{player.name}}</div>
+          <div>${{player.money}} + ${{player.recentWinnings}}</div>
+          <div>{{player.hand.toString()}}</div>
+          <div>{{player.finalHand.toString()}}</div>
+          <div>{{player.finalHand.getHandTypeString()}}</div>
+        </div>
+      </div>
+    </div> <!-- /else players -->
+  </div>
   <canvas id="canvas"></canvas>
   <div class="bottomleft">
     <div id="latency"></div>

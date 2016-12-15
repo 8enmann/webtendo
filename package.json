@@ -15,6 +15,7 @@
     "socket.io": "^1.5.1",
     "socket.io-client": "^1.5.1",
     "underscore": "^1.8.3",
+    "vue": "^2.1.6",
     "webrtc-adapter": "^2.0.6"
   },
   "scripts": {
