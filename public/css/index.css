@@ -34,6 +34,7 @@ h1 {
     font-size: 1em;
     height: 1em;
     color: black;
+    vertical-align: middle;
 }
 
 @media (orientation: portrait) {

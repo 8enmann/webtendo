@@ -19,16 +19,20 @@
   </head>
   <body>
     <div class="row">
-      <div class="bigbutton button touch-region" data-buttonvalue="commit">COMMIT</div>
+      <div class="bigbutton button touch-region commit" data-buttonvalue="commit">COMMIT</div>
+      <div class="bigbutton button touch-region fold" data-buttonvalue="fold">FOLD</div>
+      <div class="button touch-region" data-buttonvalue="toggleHand"><span id="handVerb">HIDE</span><br>HAND</div>
+    </div>
+    <div class="row">
+      <div id="namebox" class="button noedit">
+        <div class="label">NAME</div>
+        <div id="name" class="value">Connecting...</div>
+      </div>
+
       <div class="button noedit">
         <div class="label">BET</div>
         <div id="bet" class="value">$0</div>
       </div>
-      <div class="bigbutton button touch-region" data-buttonvalue="fold">FOLD</div>
-      <div id="name" class="button noedit">Your Name Here</div>
-    </div>
-    <div class="row">
-      <div class="button touch-region" data-buttonvalue="toggleHand"><span id="handVerb">HIDE</span><br>HAND</div>
       <div class="button noedit">
         <div class="label">HAND</div>
         <div id="hand" class="value">????</div>

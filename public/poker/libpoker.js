@@ -1,5 +1,5 @@
 // @flow
-var suitChars = ['\u2660','\u2665','\u2666','\u2663'];
+var suitChars = ['\u2664','\u2661','\u2662','\u2667'];
 var valueChars = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
 var handTypes = ['High Card','One Pair','Two Pair','Three','Straight','Flush','Full House','Four','Straight Flush','Royal Flush'];
 var sets = [];
