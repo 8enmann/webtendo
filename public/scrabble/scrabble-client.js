@@ -171,6 +171,8 @@ client.callbacks.onTouch = function(e, touch, region) {
         action: 'play_letter',
         value: selectedCharacter
       });
+      unselectAllCharacters();
+      selectedCharacter = null;
     } else if (params['submit']) {
       client.sendToHost({
         action: 'finish_turn',
@@ -180,11 +182,14 @@ client.callbacks.onTouch = function(e, touch, region) {
   }
 }
 
-var selectedCharacter;
-function selectCharacter(e, character) {
+function unselectAllCharacters() {
   _.each($("#hand").children(), function(charDiv) {
     $(charDiv).removeClass("selected");
   });
+}
+var selectedCharacter;
+function selectCharacter(e, character) {
+  unselectAllCharacters();
   selectedCharacter = character;
   $(e.target).closest('.letter-tile').toggleClass('selected');
 }
