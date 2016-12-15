@@ -4,6 +4,9 @@ import * as webtendo from '../scripts/webtendo';
 import _ from 'underscore';
 import $ from 'jquery';
 
+// TODO: Replace with my API key when I get it.
+var WORDNIK_API_KEY = "a2a73e7b926c924fad7001ca3111acd55af2ffabf50eb4ae5";
+var WORDNIK_BASE_URL = _.template("http://api.wordnik.com:80/v4/word.json/<%= word %>/definitions?limit=2&includeRelated=false&sourceDictionaries=all&useCanonical=false&includeTags=false&api_key=<%= api_key %>");
 var ctx;
 var gameStarted = false;
 var players = {};
@@ -12,6 +15,7 @@ var scrabbleBag = [];
 var currentPlayer = 0;
 var currentlyPlayedPositions = [];
 var board = [];
+var isFirstTurn = true;
 var colors = ["#FF0000", // red
               "#0000FF", // blue
               "#008000", // green
@@ -120,6 +124,7 @@ function maybeStartGame() {
     return;
   }
 
+  isFirstTurn = true;
   gameStarted = true;
   initScrabbleBag();
   shuffle(scrabbleBag);
@@ -202,9 +207,155 @@ function playLetter(letter) {
   }
   board[currentPosition.x][currentPosition.y] = letter;
   currentlyPlayedPositions.push(currentPosition);
-  moveCursor({x: currentPosition.x + 1, y: currentPosition.y});  // TODO: Move cursor to closest unfilled position.
+  moveCursor({x: currentPosition.x + 1, y: currentPosition.y});
   renderBoard();
   webtendo.sendToClient(currPlayerID, players[currPlayerID]);
+}
+
+function currentTurn(position) {
+  return _.some(currentlyPlayedPositions, function(p) {
+    return position.x == p.x && position.y == p.y;
+  });
+}
+
+function calculatePointsVertical(position) {
+  var min = position.y;
+  var max = position.y;
+
+  while (min > 0 && !isAvailable({x: position.x, y: min - 1})) {
+    min -= 1;
+  }
+  while (max < 14 && !isAvailable({x: position.x, y: max + 1})) {
+    max += 1;
+  }
+  var word = "";
+  var points = 0;
+  var wordMultiplier = 1;
+  if (max - min < 1) {
+    // word needs to be longer than 1 letter
+    return {word: null, points: 0};
+  }
+  for (var i = min; i <= max; i++) {
+    var p = {x: position.x, y: i};
+    word += board[position.x][i];
+    var curr = letterToPointsMap[board[position.x][i]];
+    if (currentTurn(p)) {
+      // include all the multipliers
+      var t = getTileTypeForPoints(p);
+      curr *= t.letter_mulltiplier;
+      wordMultiplier *= t.word_multiplier;
+    }
+    points += curr;
+  }
+  points *= wordMultiplier;
+  return {word: word, points: points};
+}
+
+function isValidWord(word) {
+  var url = WORDNIK_BASE_URL({word: word.toLowerCase(), api_key: WORDNIK_API_KEY});
+  return $.getJSON(url).then(function(data) {
+    if (data.length > 0) {
+      console.log(word + " is valid");
+      return true;
+    }
+    return false;
+  });
+}
+
+function calculatePointsHorizontal(position) {
+  var min = position.x;
+  var max = position.x;
+
+  while (min > 0 && !isAvailable({x: min - 1, y: position.y})) {
+    min -= 1;
+  }
+  while (max < 14 && !isAvailable({x: max + 1, y: position.y})) {
+    max += 1;
+  }
+  var word = "";
+  var points = 0;
+  var wordMultiplier = 1;
+  if (max - min < 1) {
+    return {word: null, points: 0};
+  }
+  for (var i = min; i <= max; i++) {
+    var p = {x: i, y: position.y};
+    word += board[i][position.y];
+    var curr = letterToPointsMap[board[i][position.y]];
+    if (currentTurn(p)) {
+      var t = getTileTypeForPoints(p);
+      curr *= t.letter_mulltiplier;
+      wordMultiplier *= t.word_multiplier
+    }
+    points += curr
+  }
+  points *= wordMultiplier;
+  return {word: word, points: points};
+}
+
+function calculatePoints() {
+  if (isFirstTurn && currentlyPlayedPositions.length < 2) {
+    return -1;
+  }
+  if (currentlyPlayedPositions.length < 1) {
+    return -1;
+  }
+
+  var xs = _.pluck(currentlyPlayedPositions, 'x');
+  var ys = _.pluck(currentlyPlayedPositions, 'y');
+
+  if (_.uniq(xs).length != 1 &&
+      _.uniq(ys).length != 1) {
+    return -1;
+  }
+
+  // TODO: Make sure there're no gaps between the played characters
+  if (_.uniq(xs).length == 1) {
+    if (_.some(_.range(_.min(ys), _.max(ys) + 1), function(y) {
+      return isAvailable({x: xs[0], y: y});
+    })) {
+      return -1;
+    }
+  } else {
+    if (_.some(_.range(_.min(xs), _.max(xs) + 1), function(x) {
+      return isAvailable({x: x, y: ys[0]});
+    })) {
+      return -1;
+    }
+  }
+
+  var points = 0;
+  var words = [];
+
+  var mainWord = {};
+  if (_.uniq(xs).length == 1) {
+    mainWord = calculatePointsVertical(currentlyPlayedPositions[0]);
+  } else {
+    mainWord = calculatePointsHorizontal(currentlyPlayedPositions[0]);
+  }
+  points += mainWord.points;
+  words.push(mainWord.word);
+  _.each(currentlyPlayedPositions, function(p) {
+    var h;
+    if (_.uniq(xs).length == 1) {
+      h = calculatePointsHorizontal(p);
+    } else {
+      h = calculatePointsVertical(p);
+    }
+    points += h.points;
+    words.push(h.word);
+  });
+  words = _.filter(words, function(w) {
+    return !_.isNull(w);
+  });
+
+  for (var i = 0; i < words.length; i++) {
+    if (!isValidWord(words[i])) {
+      console.log(words[i] + " is NOT valid!");
+      return -1;
+    }
+  }
+  return points;
 }
 
 webtendo.callbacks.onMessageReceived = function(x) {
@@ -231,6 +382,23 @@ webtendo.callbacks.onMessageReceived = function(x) {
     playLetter(x.value);
   } else if (x.action === "finish_turn") {
     // TODO: Check turn was valid here. either reject all characters or allow and finish turn
+    var points = calculatePoints();
+    if (points < 0) {
+      // reject all tiles that were played
+      var hand = players[x.clientId].hand;
+      _.each(currentlyPlayedPositions, function(p) {
+        hand.push(board[p.x][p.y]);
+        board[p.x][p.y] = null;
+      });
+      currentlyPlayedPositions = [];
+      webtendo.sendToClient(x.clientId, {error: "Your turn was invalid. Please place your tiles to create a word horizontally or vertically"});
+      webtendo.sendToClient(x.clientId, {hand: hand});
+      renderBoard();
+      return;
+    }
+    isFirstTurn = false;
+
+    webtendo.sendToClient(x.clientId, {points: points, message: "You got " + points + " points!"})
 
     // draw new tiles
     var hand = players[x.clientId].hand;
@@ -313,17 +481,18 @@ function renderBoard() {
       renderSquare(pos, "white", letter);
     }
   }
-  // TODO stroke currently played words.
   _.each(currentlyPlayedPositions, function(position) {
-    renderSquare(position, "yellow", board[position.x][position.y]);
+    renderSquare(position, "#d89c22", board[position.x][position.y]);
   });
 
   // stroke current position
-  renderSquare(currentPosition, "red", undefined);
+  renderSquare(currentPosition, "red", isAvailable(currentPosition) ? null : board[currentPosition.x][currentPosition.y]);
 }
 
 var TILE_TYPES = {
-  REGULAR: {name: null},
+  REGULAR: {name: null,
+            letter_mulltiplier: 1,
+            word_multiplier: 1},
   DOUBLE_LETTER: {positions: [{x: 3, y: 0},
                               {x: 0, y: 3},
                               {x: 11, y: 0},
@@ -350,6 +519,8 @@ var TILE_TYPES = {
                               {x: 8, y: 8},
                               ],
                   bg_color: "#a0aec8",
+                  letter_mulltiplier: 2,
+                  word_multiplier: 1,
                   name: "DOUBLE LETTER SCORE"},
   DOUBLE_WORD: {positions: [{x: 1, y: 1},
                             {x: 2, y: 2},
@@ -368,6 +539,8 @@ var TILE_TYPES = {
                             {x: 3, y: 11},
                             {x: 4, y: 10}],
                 bg_color: "#e2f5ff",
+                letter_mulltiplier: 1,
+                word_multiplier: 2,
                 name: "DOUBLE WORD SCORE"},
   TRIPLE_LETTER: {positions: [{x: 1, y: 5},
                               {x: 1, y: 9},
@@ -382,6 +555,8 @@ var TILE_TYPES = {
                               {x: 9, y: 5},
                               {x: 9, y: 9}],
                   bg_color: "#7199b0",
+                  letter_mulltiplier: 3,
+                  word_multiplier: 1,
                   name: "TRIPLE LETTER SCORE"},
   TRIPLE_WORD: {positions: [{x: 0, y: 0},
                             {x: 0, y: 7},
@@ -392,7 +567,17 @@ var TILE_TYPES = {
                             {x: 14, y: 7},
                             {x: 14, y: 14}],
                 bg_color: "#d07b7b",
+                letter_mulltiplier: 1,
+                word_multiplier: 3,
                 name: "TRIPLE WORD SCORE"},
+}
+
+function getTileTypeForPoints(position) {
+  // first check if position is one of the currently played letters
+  if (!currentTurn(position)) {
+    return TILE_TYPES.REGULAR;
+  }
+  return getTileType(position);
 }
 
 function getTileType(position) {
