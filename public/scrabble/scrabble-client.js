@@ -108,6 +108,13 @@ webtendo.callbacks.onMessageReceived = function(x) {
     return;
   }
 
+  if (x.points) {
+    // TODO points animation
+    points = x.score;
+    updateInfo();
+    return;
+  }
+
   if (x.message) {
     alert(x.message);
     return;

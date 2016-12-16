@@ -5,7 +5,7 @@ import _ from 'underscore';
 import $ from 'jquery';
 
 // TODO: Replace with my API key when I get it.
-var WORDNIK_API_KEY = "a2a73e7b926c924fad7001ca3111acd55af2ffabf50eb4ae5";
+var WORDNIK_API_KEY = "851c7a21454c7fcd0710201ae7106576b60aec3f2b3b628d9";
 var WORDNIK_BASE_URL = _.template("http://api.wordnik.com:80/v4/word.json/<%= word %>/definitions?limit=2&includeRelated=false&sourceDictionaries=all&useCanonical=false&includeTags=false&api_key=<%= api_key %>");
 var ctx;
 var gameStarted = false;
@@ -130,6 +130,7 @@ function maybeStartGame() {
   shuffle(scrabbleBag);
   for (var id in players) {
     players[id].hand = drawCharacters(7);
+    players[id].score = 0;
     webtendo.sendToClient(id, players[id]);
   }
   setCurrentPlayer(0);
@@ -397,8 +398,8 @@ webtendo.callbacks.onMessageReceived = function(x) {
       return;
     }
     isFirstTurn = false;
-
-    webtendo.sendToClient(x.clientId, {points: points, message: "You got " + points + " points!"})
+    players[x.clientId].score = players[x.clientId].score + points;
+    webtendo.sendToClient(x.clientId, {points: points, score: players[x.clientId].score, message: "You got " + points + " points!"});
 
     // draw new tiles
     var hand = players[x.clientId].hand;
