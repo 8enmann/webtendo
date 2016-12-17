@@ -368,8 +368,17 @@ webtendo.callbacks.onMessageReceived = function(x) {
   if (!gameStarted) {
     if (x.action === "ready") {
       players[x.clientId].ready = x.value;
+    } else if (x.action === "start") {
+      maybeStartGame();
+      return;
     }
-    maybeStartGame();
+    if (_.every(_.values(players), function(p) {
+      return p.ready;
+    })) {
+      _.each(_.keys(players), function(id) {
+        webtendo.sendToClient(id, {ready: true});
+      });
+    }
     return;
   }
 
@@ -457,7 +466,7 @@ function drawInfoPanel() {
   _.each(playersArray, function(playerId, index) {
     yOffset += 24;
     var p = players[playerId];
-    ctx.fillText((currentPlayer == index ? "> " : "") + p.name, 5, yOffset);
+    ctx.fillText(p.name + ": " + p.score + (currentPlayer == index ? " <" : ""), 5, yOffset);
   });
 }
 
