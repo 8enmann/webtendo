@@ -139,23 +139,16 @@ webtendo.callbacks.onMessageReceived = function(x) {
   }
 }
 
-var joystick = document.getElementById('joystick');
-var stick = document.getElementById('stick');
+var dpad = document.getElementById('dpad');
 
 client.callbacks.onTouch = function(e, touch, region) {
-  if (region === 'stick') {
-    let position = {x: 0, y: 0};
+  if (region.indexOf('dpad-') === 0) {
     if (e.type === 'touchend') {
-      resetStick();
-    } else {
-      position = moveStick(touch.pageX - joystick.offsetLeft, touch.pageY - joystick.offsetTop);
+      client.sendToHost({
+        action: "moveCursor",
+        value: region.substring(5),
+      });
     }
-
-    client.sendToHost({
-      action: e.type,
-      value: region,
-      position: position, 
-    });
   } else {
     // character tiles part of screen
     if (e.type !== 'touchend' || region === '') {
@@ -217,36 +210,4 @@ function selectCharacter(e, character) {
   unselectAllCharacters();
   selectedCharacter = character;
   $(e.target).closest('.letter-tile').toggleClass('selected');
-}
-
-function moveStick(x,y) {
-  let radius = joystick.offsetWidth/2;
-  let relativeX = x - radius;
-  let relativeY = y - radius;
-  // Check to see if the point is out of bounds and if so, clip.
-  let distance = Math.sqrt(Math.pow(relativeX, 2) + Math.pow(relativeY, 2));
-  let theta = Math.atan2(relativeY, relativeX);
-  let maxDistance = radius - stick.offsetWidth/2;
-  if (distance > maxDistance) {
-    stick.style.backgroundColor = 'red';
-    x = maxDistance * Math.cos(theta) + radius;
-    y = maxDistance * Math.sin(theta) + radius;
-  } else {
-    stick.style.backgroundColor = 'white';
-  }
-
-  let newLeft = x - stick.offsetWidth / 2;
-  let newTop = y - stick.offsetHeight / 2;
-
-  stick.style.left = newLeft + 'px';
-  stick.style.top = newTop + 'px';
-
-  return {
-    x: Math.min(maxDistance, distance) * Math.cos(theta) / maxDistance,
-    y: Math.min(maxDistance, distance) * Math.sin(theta) / maxDistance,
-  };
-}
-
-function resetStick() {
-  moveStick(joystick.offsetHeight/2, joystick.offsetWidth/2);
 }

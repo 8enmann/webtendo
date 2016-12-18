@@ -48,22 +48,57 @@
         justify-content: center;
         align-items: center;
       }
-     #latency {
-       position: absolute;
-       bottom: 0;
-       margin: 0px;
-       opacity: .5;
-     }
+      #latency {
+        position: absolute;
+        bottom: 0;
+        margin: 0px;
+        opacity: .5;
+      }
+      .dpad {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .dpad .region {
+        flex: 1;
+        margin: 10px;
+        flex-direction: row;
+        justify-content: center;
+      }
+      .region .middle {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+      }
+
+      .dpad .btn {
+        background-color: black;
+        padding: 10px;
+        text-align: center;
+        width: 30px;
+        height: 30px;
+        margin: auto;
+      }
 
     </style>
   </head>
 
   <body>
 
-    <div class="ctrl-left touch-region" data-buttonvalue="stick">
-      <div id="joystick">
-        <div id="stick">
+    <div class="ctrl-left dpad">
+      <div class="region">
+        <div class="btn up touch-region" data-buttonvalue="dpad-U">^</div>
+      </div>
+      <div class="region">
+        <div class="middle">
+          <div class="btn left touch-region" data-buttonvalue="dpad-L"><</div>
+          <div class="btn right touch-region" data-buttonvalue="dpad-R">></div>
         </div>
+      </div>
+      <div class="region">
+        <div class="btn down touch-region" data-buttonvalue="dpad-D">v</div>
       </div>
     </div>
 
