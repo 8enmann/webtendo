@@ -142,10 +142,28 @@ function setCurrentPlayer(playerIndex) {
   drawInfoPanel();
 }
 
-function handleJoystickMoved(x, y) {
+var touchStartTime = 0;
+var lastActionTime = 0;
+function handleJoystickMoved(action, x, y) {
   if (x == 0 && y == 0) {
     return;
   }
+
+  if (action === "touchstart") {
+    touchStartTime = Date.now();
+    return;
+  } else if (action === "touchmove") {
+    if (touchStartTime == 0 || Date.now() - touchStartTime < 300) {
+      return;
+    }
+    if (Date.now() - lastActionTime < 300) {
+      return;
+    }
+  } else {
+    touchStartTime = 0;
+  }
+  lastActionTime = Date.now();
+
   var direction;
   if (Math.abs(x) > Math.abs(y)) {
     direction = x < 0 ? 'L' : 'R';
@@ -368,8 +386,17 @@ webtendo.callbacks.onMessageReceived = function(x) {
   if (!gameStarted) {
     if (x.action === "ready") {
       players[x.clientId].ready = x.value;
+    } else if (x.action === "start") {
+      maybeStartGame();
+      return;
     }
-    maybeStartGame();
+    if (_.every(_.values(players), function(p) {
+      return p.ready;
+    })) {
+      _.each(_.keys(players), function(id) {
+        webtendo.sendToClient(id, {ready: true});
+      });
+    }
     return;
   }
 
@@ -378,7 +405,7 @@ webtendo.callbacks.onMessageReceived = function(x) {
     return;
   }
   if (x.value === 'stick') {
-    handleJoystickMoved(x.position.x, x.position.y);
+    handleJoystickMoved(x.action, x.position.x, x.position.y);
   } else if (x.action === "play_letter") {
     playLetter(x.value);
   } else if (x.action === "finish_turn") {
@@ -457,7 +484,7 @@ function drawInfoPanel() {
   _.each(playersArray, function(playerId, index) {
     yOffset += 24;
     var p = players[playerId];
-    ctx.fillText((currentPlayer == index ? "> " : "") + p.name, 5, yOffset);
+    ctx.fillText(p.name + ": " + p.score + (currentPlayer == index ? " <" : ""), 5, yOffset);
   });
 }
 

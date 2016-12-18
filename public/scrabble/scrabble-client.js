@@ -8,6 +8,7 @@ var letters = [];
 var points = 0;
 var numTilesLeft = 100;
 var playerReady = false;
+var everyoneReady = false;
 
 var letterToPointsMap = {
     'E': 1,
@@ -92,6 +93,9 @@ function updateActionButtons() {
     $("#action_buttons").append(" \
         <button class='btn-play touch-region' data-buttonvalue='play=true'>Play Letter</button> \
         <button class='btn-play touch-region' data-buttonvalue='submit=true'>Finish Turn</button>");
+  } else if (everyoneReady) {
+    $("#action_buttons").append(" \
+        <button class='btn-play touch-region' data-buttonvalue='start=true'>Start Game!</button>");
   } else {
     $("#action_buttons").append(" \
         <button class='btn-play touch-region' data-buttonvalue='ready=true'>Ready</button>");
@@ -108,17 +112,14 @@ webtendo.callbacks.onMessageReceived = function(x) {
     return;
   }
 
-  if (x.points) {
-    // TODO points animation
-    points = x.score;
-    updateInfo();
-    return;
+  if (x.ready) {
+    everyoneReady = true;
+    updateActionButtons();
   }
 
-  if (x.message) {
-    client.vibrate();    
-    alert(x.message);
-    return;
+  if (x.hand) {
+    // render new hand
+    updateHand(x.hand);
   }
 
   if (x.name) {
@@ -126,9 +127,15 @@ webtendo.callbacks.onMessageReceived = function(x) {
     updateInfo();
   }
 
-  if (x.hand) {
-    // render new hand
-    updateHand(x.hand);
+  if (x.points) {
+    // TODO points animation
+    points = x.score;
+    updateInfo();
+  }
+
+  if (x.message) {
+    client.vibrate();
+    alert(x.message);
   }
 }
 
@@ -181,6 +188,11 @@ client.callbacks.onTouch = function(e, touch, region) {
       });
       unselectAllCharacters();
       selectedCharacter = null;
+    } else if (params['start']) {
+      client.sendToHost({
+        action: 'start',
+        value: true,
+      });
     } else if (params['submit']) {
       client.sendToHost({
         action: 'finish_turn',
