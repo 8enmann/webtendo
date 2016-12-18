@@ -23,6 +23,12 @@ export function checkOrientation(orientation = 'landscape') {
   }
 }
 
+// Simple 3 buzz convenience wrapper.
+export function vibrate() {
+  window.navigator.vibrate([150, 150, 150, 150, 150]);
+}
+
+
 /****************************************************************************
  * Private
  ****************************************************************************/

@@ -116,6 +116,7 @@ webtendo.callbacks.onMessageReceived = function(x) {
   }
 
   if (x.message) {
+    client.vibrate();    
     alert(x.message);
     return;
   }

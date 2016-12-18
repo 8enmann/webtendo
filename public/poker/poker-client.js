@@ -59,7 +59,7 @@ webtendo.callbacks.onMessageReceived = function(x) {
       updateBid(bid);
       document.getElementById('namebox').style.backgroundColor = '#03a9f4';//blue
       if (!isMyTurn) {
-        window.navigator.vibrate([150, 150, 150, 150, 150]);
+        client.vibrate();
       }
       isMyTurn = true;
     } else {
