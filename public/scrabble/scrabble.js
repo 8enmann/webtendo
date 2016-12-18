@@ -3,13 +3,12 @@
 import * as webtendo from '../scripts/webtendo';
 import _ from 'underscore';
 import $ from 'jquery';
+import Vue from 'vue';
 
-// TODO: Replace with my API key when I get it.
 var WORDNIK_API_KEY = "851c7a21454c7fcd0710201ae7106576b60aec3f2b3b628d9";
 var WORDNIK_BASE_URL = _.template("http://api.wordnik.com:80/v4/word.json/<%= word %>/definitions?limit=2&includeRelated=false&sourceDictionaries=all&useCanonical=false&includeTags=false&api_key=<%= api_key %>");
 var ctx;
 var gameStarted = false;
-var players = {};
 var playersArray = []; // play order.
 var scrabbleBag = [];
 var currentPlayer = 0;
@@ -32,7 +31,16 @@ var names = ["Gabble Scream",
             ];
 var currentPosition = {x: 7, y: 7};
 
-var letterToPointsMap = {
+let app = new Vue({
+  el: '#app',
+  data: {
+    players: {},
+    currentPlayerId: undefined,
+  },
+});
+
+
+const letterToPointsMap = {
     'E': 1,
     'A': 1,
     'I': 1,
@@ -115,12 +123,12 @@ function drawCharacters(count) {
 }
 
 function maybeStartGame() {
-  if (gameStarted || Object.keys(players).length < 2) {
+  if (gameStarted || Object.keys(app.players).length < 2) {
     return;
   }
 
   // check that every player is ready
-  if (!_.every(_.pluck(Object.values(players), 'ready'))) {
+  if (!_.every(_.pluck(Object.values(app.players), 'ready'))) {
     return;
   }
 
@@ -128,18 +136,18 @@ function maybeStartGame() {
   gameStarted = true;
   initScrabbleBag();
   shuffle(scrabbleBag);
-  for (var id in players) {
-    players[id].hand = drawCharacters(7);
-    players[id].score = 0;
-    webtendo.sendToClient(id, players[id]);
+  for (var id in app.players) {
+    app.players[id].hand = drawCharacters(7);
+    app.players[id].score = 0;
+    webtendo.sendToClient(id, app.players[id]);
   }
   setCurrentPlayer(0);
 }
 
 function setCurrentPlayer(playerIndex) {
   currentPlayer = playerIndex;
+  app.currentPlayerId = playersArray[playerIndex];
   webtendo.sendToClient(playersArray[playerIndex], {message: "Your turn!"});
-  drawInfoPanel();
 }
 
 var touchStartTime = 0;
@@ -214,13 +222,13 @@ function playLetter(letter) {
     webtendo.sendToClient(currPlayerID, {error: "This spot is already taken!"});
     return;
   }
-  var hand = players[currPlayerID].hand;
+  var hand = app.players[currPlayerID].hand;
   if (!_.contains(hand, letter)) {
     webtendo.sendToClient(currPlayerID, {error: "Player played a letter not in hand. How did this happen?"});
     return;
   }
   hand.splice(_.indexOf(hand, letter), 1);
-  players[currPlayerID].hand = hand;
+  app.players[currPlayerID].hand = hand;
   if (_.isUndefined(board[currentPosition.x])) {
     board[currentPosition.x] = [];
   }
@@ -228,7 +236,7 @@ function playLetter(letter) {
   currentlyPlayedPositions.push(currentPosition);
   moveCursor({x: currentPosition.x + 1, y: currentPosition.y});
   renderBoard();
-  webtendo.sendToClient(currPlayerID, players[currPlayerID]);
+  webtendo.sendToClient(currPlayerID, app.players[currPlayerID]);
 }
 
 function currentTurn(position) {
@@ -385,18 +393,22 @@ webtendo.callbacks.onMessageReceived = function(x) {
   }
   if (!gameStarted) {
     if (x.action === "ready") {
-      players[x.clientId].ready = x.value;
+      app.players[x.clientId].ready = x.value;
     } else if (x.action === "start") {
       maybeStartGame();
       return;
     }
-    if (_.every(_.values(players), function(p) {
+    if (_.every(_.values(app.players), function(p) {
       return p.ready;
     })) {
-      _.each(_.keys(players), function(id) {
+      _.each(_.keys(app.players), function(id) {
         webtendo.sendToClient(id, {ready: true});
       });
     }
+    return;
+  }
+  if (x.name) {
+    app.players[x.clientId].name = x.name;
     return;
   }
 
@@ -413,7 +425,7 @@ webtendo.callbacks.onMessageReceived = function(x) {
     var points = calculatePoints();
     if (points < 0) {
       // reject all tiles that were played
-      var hand = players[x.clientId].hand;
+      var hand = app.players[x.clientId].hand;
       _.each(currentlyPlayedPositions, function(p) {
         hand.push(board[p.x][p.y]);
         board[p.x][p.y] = null;
@@ -425,16 +437,16 @@ webtendo.callbacks.onMessageReceived = function(x) {
       return;
     }
     isFirstTurn = false;
-    players[x.clientId].score = players[x.clientId].score + points;
-    webtendo.sendToClient(x.clientId, {points: points, score: players[x.clientId].score, message: "You got " + points + " points!"});
+    app.players[x.clientId].score = app.players[x.clientId].score + points;
+    webtendo.sendToClient(x.clientId, {points: points, score: app.players[x.clientId].score, message: "You got " + points + " points!"});
 
     // draw new tiles
-    var hand = players[x.clientId].hand;
+    var hand = app.players[x.clientId].hand;
     for (var i = 0; scrabbleBag.length > 0 && i < currentlyPlayedPositions.length; i++) {
       hand.push(scrabbleBag.pop());
     }
-    players[x.clientId].hand = hand;
-    webtendo.sendToClient(x.clientId, players[x.clientId]);
+    app.players[x.clientId].hand = hand;
+    webtendo.sendToClient(x.clientId, app.players[x.clientId]);
     currentlyPlayedPositions = [];
     currentPosition = {x: 7, y: 7};
     renderBoard();
@@ -445,50 +457,31 @@ webtendo.callbacks.onMessageReceived = function(x) {
 webtendo.callbacks.onConnected = function(x) {
   let id = x.clientId;
   console.log(id + " connected");
-  if (players[id]) {
+  if (app.players[id]) {
     // player reconnected. give the player their hand
-    webtendo.sendToClient(id, players[id]);
+    webtendo.sendToClient(id, app.players[id]);
     return;
   }
   if (gameStarted) {
     webtendo.sendToClient(id, {error: 'Sorry, a game is already in session.'});
     return;
   }
-  if (players.length >= 6) {
+  if (app.players.length >= 6) {
     webtendo.sendToClient(id, {error: 'Sorry, this game is at capacity.'});
     return;
   }
   // else, add the new player!
-  var currNumPlayers = Object.keys(players).length;
-  players[id] = {
+  var currNumPlayers = Object.keys(app.players).length;
+  app.$set(app.players, id, {
     color: colors[currNumPlayers],
     name: names[currNumPlayers],
-  }
-  webtendo.sendToClient(id, players[id]);
-  playersArray.push(id);
-  drawInfoPanel();
-}
-
-function drawInfoPanel() {
-  ctx.clearRect(0, 0, 299, canvas.offsetHeight);
-  ctx.fillStyle = "white";
-  ctx.font = "24px Courier New";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "top";
-
-  var yOffset = 0;
-  ctx.fillText("Scrabble", 0, 0);
-  yOffset += 24;
-
-  ctx.fillText("Players List", 0, yOffset);
-  _.each(playersArray, function(playerId, index) {
-    yOffset += 24;
-    var p = players[playerId];
-    ctx.fillText(p.name + ": " + p.score + (currentPlayer == index ? " <" : ""), 5, yOffset);
+    id: id,
   });
+  webtendo.sendToClient(id, app.players[id]);
+  playersArray.push(id);
 }
 
-var offsetX = 300;
+const offsetX = 0;
 function moveCursor(position) {
   currentPosition = position;
   renderBoard();
@@ -632,7 +625,7 @@ function renderSquare(position, edgeStyle, letter) {
     // render the character
     ctx.font = "18px Courier New";
     ctx.fillStyle = "white";
-    ctx.fillText(letter, offsetX + 40 * position.x + 24 + 1, 40 * position.y + 13 + 1);
+    ctx.fillText(letter, offsetX + 40 * position.x + 24 + 1, 40 * position.y + 22 + 1);
 
     ctx.font = "12px Courier New";
     ctx.fillStyle = "white";
@@ -649,7 +642,7 @@ function renderSquare(position, edgeStyle, letter) {
     var words = tileType.name.split(' ');
     for (var i = 0; i < words.length; i++) {
       var w = words[i];
-      ctx.fillText(w, offsetX + 40 * position.x + 10 + 1, 40 * position.y + 13 + 10 * i + 1);
+      ctx.fillText(w, offsetX + 40 * position.x + 10 + 1, 40 * position.y + 18 + 10 * i + 1);
     }
   }
   ctx.beginPath();
@@ -664,7 +657,6 @@ function renderSquare(position, edgeStyle, letter) {
 }
 
 function main() {
-  drawInfoPanel();
   drawBoard();
 }
 
@@ -673,7 +665,9 @@ function main() {
   if (canvas.getContext) {
     ctx = canvas.getContext('2d');
     // Awful hack from stackoverflow to increase canvas resolution.
-    const ratio = window.devicePixelRatio, w = canvas.offsetWidth, h = canvas.offsetHeight;
+    const ratio = window.devicePixelRatio;
+    let w = canvas.offsetWidth;
+    let h = canvas.offsetHeight;
     canvas.width = w * ratio;
     canvas.height = h * ratio;
     canvas.style.width = w + "px";

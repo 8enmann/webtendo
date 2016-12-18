@@ -89,7 +89,9 @@ function handleClick(e) {
   }
   let region = getRegion(e.pageX, e.pageY);
   // console.log(e)
-  var copy = {type: CLICK_TYPES[e.type], pageX: e.pageX, pageY: e.pageY};
+  var copy = {type: CLICK_TYPES[e.type],
+              target: e.target,
+              pageX: e.pageX, pageY: e.pageY};
   touchFeedback(region, copy.type);
   if (region !== undefined && callbacks.onTouch) {
     callbacks.onTouch(copy, copy, region.value);
