@@ -152,34 +152,7 @@ function setCurrentPlayer(playerIndex) {
 
 var touchStartTime = 0;
 var lastActionTime = 0;
-function handleJoystickMoved(action, x, y) {
-  if (x == 0 && y == 0) {
-    return;
-  }
-
-  if (action === "touchstart") {
-    touchStartTime = Date.now();
-    return;
-  } else if (action === "touchmove") {
-    if (touchStartTime == 0 || Date.now() - touchStartTime < 300) {
-      return;
-    }
-    if (Date.now() - lastActionTime < 300) {
-      return;
-    }
-  } else {
-    touchStartTime = 0;
-  }
-  lastActionTime = Date.now();
-
-  var direction;
-  if (Math.abs(x) > Math.abs(y)) {
-    direction = x < 0 ? 'L' : 'R';
-  } else {
-    direction = y > 0 ? 'D' : 'U';
-  }
-
-  // iterate through board to find next available position in the direction
+function handleMoveCursor(direction) {
   if (direction === 'L') {
     for (var i = currentPosition.x - 1; i >= 0; i--) {
       if (maybeMoveCursor({x: i, y: currentPosition.y})) { return; }
@@ -416,8 +389,8 @@ webtendo.callbacks.onMessageReceived = function(x) {
     webtendo.sendToClient(x.clientId, {error: "It's not your turn!"});
     return;
   }
-  if (x.value === 'stick') {
-    handleJoystickMoved(x.action, x.position.x, x.position.y);
+  if (x.action === "moveCursor") {
+    handleMoveCursor(x.value);
   } else if (x.action === "play_letter") {
     playLetter(x.value);
   } else if (x.action === "finish_turn") {
