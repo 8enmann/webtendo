@@ -14,9 +14,11 @@ canvas {
 }
 
 .sidebar {
-    width: 300px;
+    width: 280px;
     height: 100%;
     /* float: left; */
+    padding: 10px;
+    font-size: 1.2em;
 }
 
 .table > * {
@@ -37,3 +39,10 @@ canvas {
     background-color: #4CAF50;
 }
 
+.player > .name {
+    flex: 1;
+}
+
+.player > .score {
+    flex: 0;
+}

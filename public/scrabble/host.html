@@ -17,8 +17,8 @@
       <div class="table row player"
            v-bind:class="{ active: player.id == currentPlayerId }"
            v-for="player in players">
-        <div>{{player.name}}</div>
-        <div>{{player.score}}</div>
+        <div class="name">{{player.name}}</div>
+        <div class="score">{{player.score}}</div>
       </div>
       
     </div>

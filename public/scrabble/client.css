@@ -65,9 +65,9 @@ body {
 
 .info {
   /* margin: 10px; */
-  font-family: Courier New;
-  font-weight: 700;
+  /* font-family: Courier New; */
+  /* font-weight: 700; */
   padding: 10px;
   color: black;
-  box-sizing: border-box;
+  /* box-sizing: border-box; */
 }

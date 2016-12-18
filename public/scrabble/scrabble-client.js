@@ -71,7 +71,7 @@ function createCharacterTile(character) {
 
 function updateInfo() {
   $("#info").empty();
-  $("#info").append("<div class=info>Player: " + name + "</div>");
+  $("#info").append(`<div id="name" class="info touch-region" data-buttonvalue="name">Name: ${name}</div>`);
   if ($("#hand").children().length > 0) { // game started. display points and stuff
     $("#info").append(" \
         <div class=info>Points: " + points + "</div> \
@@ -160,6 +160,11 @@ client.callbacks.onTouch = function(e, touch, region) {
     // character tiles part of screen
     if (e.type !== 'touchend' || region === '') {
       return;
+    }
+    if (region === 'name') {
+      let a = prompt('Edit name');
+      client.sendToHost({name: a});
+      $('#name').text(`Name: ${a}`);
     }
     // which character?
     var params = {};
