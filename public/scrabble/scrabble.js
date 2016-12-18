@@ -142,10 +142,28 @@ function setCurrentPlayer(playerIndex) {
   drawInfoPanel();
 }
 
-function handleJoystickMoved(x, y) {
+var touchStartTime = 0;
+var lastActionTime = 0;
+function handleJoystickMoved(action, x, y) {
   if (x == 0 && y == 0) {
     return;
   }
+
+  if (action === "touchstart") {
+    touchStartTime = Date.now();
+    return;
+  } else if (action === "touchmove") {
+    if (touchStartTime == 0 || Date.now() - touchStartTime < 300) {
+      return;
+    }
+    if (Date.now() - lastActionTime < 300) {
+      return;
+    }
+  } else {
+    touchStartTime = 0;
+  }
+  lastActionTime = Date.now();
+
   var direction;
   if (Math.abs(x) > Math.abs(y)) {
     direction = x < 0 ? 'L' : 'R';
@@ -387,7 +405,7 @@ webtendo.callbacks.onMessageReceived = function(x) {
     return;
   }
   if (x.value === 'stick') {
-    handleJoystickMoved(x.position.x, x.position.y);
+    handleJoystickMoved(x.action, x.position.x, x.position.y);
   } else if (x.action === "play_letter") {
     playLetter(x.value);
   } else if (x.action === "finish_turn") {
