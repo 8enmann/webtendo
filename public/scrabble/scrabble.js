@@ -395,7 +395,6 @@ webtendo.callbacks.onMessageReceived = function(x) {
   }
 
   if (x.clientId != playersArray[currentPlayer]) {
-    webtendo.sendToClient(x.clientId, {error: "It's not your turn!"});
     return;
   }
   if (x.action === "moveCursor") {
