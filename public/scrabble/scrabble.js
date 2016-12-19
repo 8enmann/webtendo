@@ -14,7 +14,6 @@ var scrabbleBag = [];
 var currentPlayer = 0;
 var currentlyPlayedPositions = [];
 var board = [];
-var isFirstTurn = true;
 var colors = ["#FF0000", // red
               "#0000FF", // blue
               "#008000", // green
@@ -132,7 +131,6 @@ function maybeStartGame() {
     return;
   }
 
-  isFirstTurn = true;
   gameStarted = true;
   initScrabbleBag();
   shuffle(scrabbleBag);
@@ -251,17 +249,6 @@ function calculatePointsVertical(position) {
   return {word: word, points: points};
 }
 
-function isValidWord(word) {
-  var url = WORDNIK_BASE_URL({word: word.toLowerCase(), api_key: WORDNIK_API_KEY});
-  return $.getJSON(url).then(function(data) {
-    if (data.length > 0) {
-      console.log(word + " is valid");
-      return true;
-    }
-    return false;
-  });
-}
-
 function calculatePointsHorizontal(position) {
   var min = position.x;
   var max = position.x;
@@ -293,13 +280,20 @@ function calculatePointsHorizontal(position) {
   return {word: word, points: points};
 }
 
-function calculatePoints() {
+function finishPlayerTurn(playerId) {
   var baseErrorMessage = "Your turn was not valid";
-  if (isFirstTurn && currentlyPlayedPositions.length < 2) {
-    return {error: baseErrorMessage, points: -1};
+  var numberOfLettersPlayed = 0;
+  for (var i = 0; i < 15; i++) {
+    for (var j = 0; j < 15; j++) {
+      numberOfLettersPlayed += (isAvailable({x: i, y: j}) ? 0 : 1);
+    }
+  }
+  if (numberOfLettersPlayed == currentlyPlayedPositions.length &&
+      (currentlyPlayedPositions.length < 2 || isAvailable({x: 7, y: 7}))) {
+    sendResultToClient(playerId, {error: baseErrorMessage, points: -1});
   }
   if (currentlyPlayedPositions.length < 1) {
-    return {error: baseErrorMessage, points: -1};
+    sendResultToClient(playerId, {error: baseErrorMessage, points: -1});
   }
 
   var xs = _.pluck(currentlyPlayedPositions, 'x');
@@ -307,7 +301,7 @@ function calculatePoints() {
 
   if (_.uniq(xs).length != 1 &&
       _.uniq(ys).length != 1) {
-    return {error: baseErrorMessage, points: -1};
+    sendResultToClient(playerId, {error: baseErrorMessage, points: -1});
   }
 
   // TODO: Make sure there're no gaps between the played characters
@@ -315,13 +309,13 @@ function calculatePoints() {
     if (_.some(_.range(_.min(ys), _.max(ys) + 1), function(y) {
       return isAvailable({x: xs[0], y: y});
     })) {
-      return {error: baseErrorMessage, points: -1};
+      sendResultToClient(playerId, {error: baseErrorMessage, points: -1});
     }
   } else {
     if (_.some(_.range(_.min(xs), _.max(xs) + 1), function(x) {
       return isAvailable({x: x, y: ys[0]});
     })) {
-      return {error: baseErrorMessage, points: -1};
+      sendResultToClient(playerId, {error: baseErrorMessage, points: -1});
     }
   }
 
@@ -350,12 +344,28 @@ function calculatePoints() {
     return !_.isNull(w);
   });
 
+  var invalidWords = [];
+  var promises = [];
   for (var i = 0; i < words.length; i++) {
-    if (!isValidWord(words[i])) {
-      return {error: `{words[i]} is not a valid word!`, points: -1};
-    }
+    var url = WORDNIK_BASE_URL({word: words[i].toLowerCase(), api_key: WORDNIK_API_KEY});
+    var word = words[i];
+    promises.push(fetch(url).then(resp => {
+      return resp.json().then(json => {
+        return {valid: json.length > 0, word: word};
+      });
+    }));
   }
-  return {points: points};
+  Promise.all(promises).then(values => {
+    var invalid = _.pluck(_.filter(values, function(v) {
+      return !v.valid;
+    }), 'word');
+    if (invalid.length > 0) {
+      sendResultToClient(playerId, {points: -1, error: `Invalid word(s): ${invalid}`});
+    } else {
+      sendResultToClient(playerId, {points: points});
+    }
+  });
+  //return {points: points};
 }
 
 webtendo.callbacks.onMessageReceived = function(x) {
@@ -394,37 +404,38 @@ webtendo.callbacks.onMessageReceived = function(x) {
   } else if (x.action === "play_letter") {
     playLetter(x.value);
   } else if (x.action === "finish_turn") {
-    // TODO: Check turn was valid here. either reject all characters or allow and finish turn
-    var result = calculatePoints();
-    if (result.points < 0) {
-      // reject all tiles that were played
-      var hand = app.players[x.clientId].hand;
-      _.each(currentlyPlayedPositions, function(p) {
-        hand.push(board[p.x][p.y]);
-        board[p.x][p.y] = null;
-      });
-      currentlyPlayedPositions = [];
-      webtendo.sendToClient(x.clientId, {error: result.error});
-      webtendo.sendToClient(x.clientId, {hand: hand});
-      renderBoard();
-      return;
-    }
-    isFirstTurn = false;
-    app.players[x.clientId].score = app.players[x.clientId].score + result.points;
-    webtendo.sendToClient(x.clientId, {points: result.points, score: app.players[x.clientId].score, message: "You got " + result.points + " points!"});
-
-    // draw new tiles
-    var hand = app.players[x.clientId].hand;
-    for (var i = 0; scrabbleBag.length > 0 && i < currentlyPlayedPositions.length; i++) {
-      hand.push(scrabbleBag.pop());
-    }
-    app.players[x.clientId].hand = hand;
-    webtendo.sendToClient(x.clientId, app.players[x.clientId]);
-    currentlyPlayedPositions = [];
-    currentPosition = {x: 7, y: 7};
-    renderBoard();
-    setCurrentPlayer((currentPlayer + 1) % playersArray.length);
+    finishPlayerTurn(x.clientId);
   }
+}
+
+function sendResultToClient(playerId, result) {
+  if (result.points < 0) {
+    // reject all tiles that were played
+    var hand = app.players[playerId].hand;
+    _.each(currentlyPlayedPositions, function(p) {
+      hand.push(board[p.x][p.y]);
+      board[p.x][p.y] = null;
+    });
+    currentlyPlayedPositions = [];
+    webtendo.sendToClient(playerId, {error: result.error});
+    webtendo.sendToClient(playerId, {hand: hand});
+    renderBoard();
+    return;
+  }
+  app.players[playerId].score = app.players[playerId].score + result.points;
+  webtendo.sendToClient(playerId, {points: result.points, score: app.players[playerId].score, message: "You got " + result.points + " points!"});
+
+  // draw new tiles
+  var hand = app.players[playerId].hand;
+  for (var i = 0; scrabbleBag.length > 0 && i < currentlyPlayedPositions.length; i++) {
+    hand.push(scrabbleBag.pop());
+  }
+  app.players[playerId].hand = hand;
+  webtendo.sendToClient(playerId, app.players[playerId]);
+  currentlyPlayedPositions = [];
+  currentPosition = {x: 7, y: 7};
+  renderBoard();
+  setCurrentPlayer((currentPlayer + 1) % playersArray.length);
 }
 
 webtendo.callbacks.onConnected = function(x) {
