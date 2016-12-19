@@ -10,16 +10,17 @@ body {
 button {
     background: none;
     border: 0;
+    margin-right: 4px;
     color: inherit;
     /* cursor: default; */
     font: inherit;
     line-height: normal;
     overflow: visible;
     padding: 0;
-    -webkit-tap-highlight-color: rgba(255, 255, 255, 0); 
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
     -webkit-tap-highlight-color: transparent;  /* i.e. Nexus5/Chrome and Kindle Fire HD 7'' */
     -webkit-appearance: button; /* for input */
     -webkit-user-select: none; /* for button */
-       -moz-user-select: none;
-        -ms-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }

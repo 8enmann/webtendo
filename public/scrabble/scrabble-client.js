@@ -71,12 +71,12 @@ function createCharacterTile(character) {
 
 function updateInfo() {
   $("#info").empty();
-  $("#info").append(`<div id="name" class="info touch-region" data-buttonvalue="name">Name: ${name}</div>`);
+  $("#info").append(`<div class="info touch-region" data-buttonvalue="name"><span>Name</span><span id="name">${name}</span></div>`);
   if ($("#hand").children().length > 0) { // game started. display points and stuff
-    $("#info").append(" \
-        <div class=info>Points: " + points + "</div> \
-        <div class=info>Tiles Left: " + numTilesLeft + "</div> \
-      ");
+    $("#info").append(`
+        <div class=info><span>Points</span><span>${points}</span></div>
+        <div class=info><span>Tiles left</span><span>${numTilesLeft}</div>
+      `);
   } else { // game hasn't started. display player ready state
     if (playerReady) {
       $("#info").append("<div class=info>Waiting for other players..</div>");
@@ -155,9 +155,12 @@ client.callbacks.onTouch = function(e, touch, region) {
       return;
     }
     if (region === 'name') {
-      let a = prompt('Edit name');
-      client.sendToHost({name: a});
-      $('#name').text(`Name: ${a}`);
+      let newName = prompt('Edit name');
+      if (!newName) {
+        return;
+      }
+      client.sendToHost({name: newName});
+      $('#name').text(newName);
     }
     // which character?
     var params = {};
