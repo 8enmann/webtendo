@@ -9,6 +9,7 @@ var points = 0;
 var numTilesLeft = 100;
 var playerReady = false;
 var everyoneReady = false;
+var gameStarted = false;
 
 var letterToPointsMap = {
     'E': 1,
@@ -41,6 +42,9 @@ var letterToPointsMap = {
 
 function updateHand(hand) {
   $("#hand").empty();
+  if (hand.length > 0) {
+    gameStarted = true;
+  }
 
   _.each(hand, function(character, index) {
     var $letter = createCharacterTile(character);
@@ -72,7 +76,7 @@ function createCharacterTile(character) {
 function updateInfo() {
   $("#info").empty();
   $("#info").append(`<div class="info touch-region" data-buttonvalue="name"><span>Name</span><span id="name">${name}</span></div>`);
-  if ($("#hand").children().length > 0) { // game started. display points and stuff
+  if (gameStarted) {
     $("#info").append(`
         <div class=info><span>Points</span><span>${points}</span></div>
         <div class=info><span>Tiles left</span><span>${numTilesLeft}</div>
@@ -88,7 +92,7 @@ function updateInfo() {
 
 function updateActionButtons() {
   $("#action_buttons").empty();
-  if ($("#hand").children().length > 0) {
+  if (gameStarted) { //$("#hand").children().length > 0) {
     // play buttons
     $("#action_buttons").append(" \
         <button class='btn-play touch-region' data-buttonvalue='play=true'>Play Letter</button> \

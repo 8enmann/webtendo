@@ -205,7 +205,6 @@ function playLetter(letter) {
   }
   board[currentPosition.x][currentPosition.y] = letter;
   currentlyPlayedPositions.push(currentPosition);
-  moveCursor({x: currentPosition.x + 1, y: currentPosition.y});
   renderBoard();
   webtendo.sendToClient(currPlayerID, app.players[currPlayerID]);
 }
@@ -525,7 +524,7 @@ var TILE_TYPES = {
                               {x: 7, y: 11},
                               {x: 12, y: 6},
                               {x: 12, y: 8},
-                              {x: 13, y: 7},
+                              {x: 11, y: 7},
                               {x: 6, y: 6},
                               {x: 6, y: 8},
                               {x: 8, y: 6},
