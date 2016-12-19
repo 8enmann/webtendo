@@ -60,6 +60,7 @@ body {
 .ctrl-left {
   display: flex;
   flex: 1;
+  flex-direction:column;
   justify-content: center;
 }
 
@@ -70,4 +71,98 @@ body {
   padding: 10px;
   color: black;
   /* box-sizing: border-box; */
+}
+
+#info {
+    display: flex;
+    width: 100%;
+    flex: 1;
+    flex-direction: column;
+}
+#hand {
+    display: block;
+    width: 100%;
+    flex: 1;
+    flex-direction: row;
+}
+.ctrl-right {
+    height: 100%;
+    width:50%;
+    display: flex;
+    flex-direction: column;
+    background-color: #c6e2ff;
+}
+.btn-play {
+    padding: 20px;
+    border-radius: 5px;
+    border: 2px solid black;
+    background-color: #4169e1;
+}
+.bottom {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+}
+#latency {
+    position: absolute;
+    bottom: 0;
+    margin: 0px;
+    opacity: .5;
+}
+.dpad {
+    /* width: 30px; */
+    /* height: 30px; */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.dpad .region {
+    flex: 1;
+    margin: 10px;
+    flex-direction: row;
+    justify-content: center;
+    margin: 0 auto;
+}
+.region.middle {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin: 0;
+}
+
+.region > .btn {
+    margin: 8px;
+}
+
+.triangle-up {
+	width: 0;
+	height: 0;
+	border-left: 50px solid transparent;
+	border-right: 50px solid transparent;
+	border-bottom: 100px solid white;
+}
+
+.triangle-down {
+	width: 0;
+	height: 0;
+	border-left: 50px solid transparent;
+	border-right: 50px solid transparent;
+	border-top: 100px solid white;
+}
+
+.triangle-left {
+	width: 0;
+	height: 0;
+	border-top: 50px solid transparent;
+	border-right: 100px solid white;
+	border-bottom: 50px solid transparent;
+}
+
+.triangle-right {
+	width: 0;
+	height: 0;
+	border-top: 50px solid transparent;
+	border-left: 100px solid white;
+	border-bottom: 50px solid transparent;
 }

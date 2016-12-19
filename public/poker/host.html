@@ -22,7 +22,7 @@
 <body>
   <div id="app">
     <h1 v-if="!Object.keys(players).length">Waiting for players</h1>
-    <div v-else>
+    <div v-cloak v-else>
       <div class="row community-cards">
         <!-- Always show 5 items -->
         <div v-for="card in sharedHand.cards">

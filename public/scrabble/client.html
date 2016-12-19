@@ -16,89 +16,20 @@
     <link rel="stylesheet" href="/css/main.css" />
     <link rel="stylesheet" href="client.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <style>
-      #info {
-        display: flex;
-        width: 100%;
-        flex: 1;
-        flex-direction: column;
-      }
-      #hand {
-        display: block;
-        width: 100%;
-        flex: 1;
-        flex-direction: row;
-      }
-      .ctrl-right {
-        height: 100%;
-        width:50%;
-        display: flex;
-        flex-direction: column;
-        background-color: #c6e2ff;
-      }
-      .btn-play {
-        padding: 20px;
-        border-radius: 5px;
-        border: 2px solid black;
-        background-color: #4169e1;
-      }
-      .bottom {
-        display: flex;
-        flex: 1;
-        justify-content: center;
-        align-items: center;
-      }
-      #latency {
-        position: absolute;
-        bottom: 0;
-        margin: 0px;
-        opacity: .5;
-      }
-      .dpad {
-        width: 30px;
-        height: 30px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-      }
-      .dpad .region {
-        flex: 1;
-        margin: 10px;
-        flex-direction: row;
-        justify-content: center;
-      }
-      .region .middle {
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-      }
-
-      .dpad .btn {
-        background-color: black;
-        padding: 10px;
-        text-align: center;
-        width: 30px;
-        height: 30px;
-        margin: auto;
-      }
-
-    </style>
   </head>
 
   <body>
 
     <div class="ctrl-left dpad">
       <div class="region">
-        <div class="btn up touch-region" data-buttonvalue="dpad-U">^</div>
+        <div class="btn triangle-up touch-region" data-buttonvalue="dpad-U"></div>
+      </div>
+      <div class="region middle">
+        <div class="btn triangle-left touch-region" data-buttonvalue="dpad-L" ></div>
+        <div class="btn triangle-right touch-region" data-buttonvalue="dpad-R" ></div>
       </div>
       <div class="region">
-        <div class="middle">
-          <div class="btn left touch-region" data-buttonvalue="dpad-L"><</div>
-          <div class="btn right touch-region" data-buttonvalue="dpad-R">></div>
-        </div>
-      </div>
-      <div class="region">
-        <div class="btn down touch-region" data-buttonvalue="dpad-D">v</div>
+        <div class="btn triangle-down touch-region" data-buttonvalue="dpad-D" ></div>
       </div>
     </div>
 
