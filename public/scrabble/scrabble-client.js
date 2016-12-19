@@ -143,6 +143,21 @@ webtendo.callbacks.onMessageReceived = function(x) {
   }
 }
 
+function setName() {
+  let newName = prompt('Edit name');
+  if (newName) {
+    newName = newName.trim();
+  }
+  if (newName.length > 40) {
+    alert('Pick a shorter name!');
+    return;
+  } else if (!newName) {
+    return;
+  }
+  client.sendToHost({name: newName});
+  $('#name').text(newName);  
+}
+
 var dpad = document.getElementById('dpad');
 
 client.callbacks.onTouch = function(e, touch, region) {
@@ -159,12 +174,8 @@ client.callbacks.onTouch = function(e, touch, region) {
       return;
     }
     if (region === 'name') {
-      let newName = prompt('Edit name');
-      if (!newName) {
-        return;
-      }
-      client.sendToHost({name: newName});
-      $('#name').text(newName);
+      setName();
+      return;
     }
     // which character?
     var params = {};

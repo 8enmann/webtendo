@@ -13,7 +13,7 @@
 <body>
   <div id="app">
     <h1 v-if="!Object.keys(players).length">Waiting for players</h1>
-    <div class="sidebar" v-else>
+    <div class="sidebar" v-else v-cloak>
       <div class="table row player"
            v-bind:class="{ active: player.id == currentPlayerId }"
            v-for="player in players">
