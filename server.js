@@ -64,21 +64,25 @@ io.sockets.on('connection', function(socket) {
       io.to(room).emit('created', room, clientId);
       return;
     }
+    let numClients;
     if (!io.sockets.adapter.rooms[room]) {
       socket.emit('nohost', room);
-      return;
+      numClients = 0;
+    } else {
+      numClients = io.sockets.adapter.rooms[room].length;
     }
-    var numClients = io.sockets.adapter.rooms[room].length;
     log('Room ' + room + ' now has ' + numClients + ' client(s)');
-    if (numClients < 10) {
+    if (numClients < 30) {
       log('Client ID ' + socket.id + ' joined room ' + room);
-      hostId = hosts[room];
       socket.join(room);
-      // Tell host to send an offer.
-      io.to(clients[hostId]).emit('joined', room, clientId);
+      hostId = hosts[room];
+      if (hostId) {
+        // Tell host to send an offer.
+        io.to(clients[hostId]).emit('joined', room, clientId);
+      }
       // Echo back to sender so they know they joined successfully.
       socket.emit('joined', room, clientId);
-    } else { // max two clients
+    } else { // max clients
       socket.emit('full', room);
     }
   });
