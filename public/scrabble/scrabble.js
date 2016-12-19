@@ -294,11 +294,12 @@ function calculatePointsHorizontal(position) {
 }
 
 function calculatePoints() {
+  var baseErrorMessage = "Your turn was not valid";
   if (isFirstTurn && currentlyPlayedPositions.length < 2) {
-    return -1;
+    return {error: baseErrorMessage, points: -1};
   }
   if (currentlyPlayedPositions.length < 1) {
-    return -1;
+    return {error: baseErrorMessage, points: -1};
   }
 
   var xs = _.pluck(currentlyPlayedPositions, 'x');
@@ -306,7 +307,7 @@ function calculatePoints() {
 
   if (_.uniq(xs).length != 1 &&
       _.uniq(ys).length != 1) {
-    return -1;
+    return {error: baseErrorMessage, points: -1};
   }
 
   // TODO: Make sure there're no gaps between the played characters
@@ -314,13 +315,13 @@ function calculatePoints() {
     if (_.some(_.range(_.min(ys), _.max(ys) + 1), function(y) {
       return isAvailable({x: xs[0], y: y});
     })) {
-      return -1;
+      return {error: baseErrorMessage, points: -1};
     }
   } else {
     if (_.some(_.range(_.min(xs), _.max(xs) + 1), function(x) {
       return isAvailable({x: x, y: ys[0]});
     })) {
-      return -1;
+      return {error: baseErrorMessage, points: -1};
     }
   }
 
@@ -351,11 +352,10 @@ function calculatePoints() {
 
   for (var i = 0; i < words.length; i++) {
     if (!isValidWord(words[i])) {
-      console.log(words[i] + " is NOT valid!");
-      return -1;
+      return {error: `{words[i]} is not a valid word!`, points: -1};
     }
   }
-  return points;
+  return {points: points};
 }
 
 webtendo.callbacks.onMessageReceived = function(x) {
@@ -395,8 +395,8 @@ webtendo.callbacks.onMessageReceived = function(x) {
     playLetter(x.value);
   } else if (x.action === "finish_turn") {
     // TODO: Check turn was valid here. either reject all characters or allow and finish turn
-    var points = calculatePoints();
-    if (points < 0) {
+    var result = calculatePoints();
+    if (result.points < 0) {
       // reject all tiles that were played
       var hand = app.players[x.clientId].hand;
       _.each(currentlyPlayedPositions, function(p) {
@@ -404,14 +404,14 @@ webtendo.callbacks.onMessageReceived = function(x) {
         board[p.x][p.y] = null;
       });
       currentlyPlayedPositions = [];
-      webtendo.sendToClient(x.clientId, {error: "Your turn was invalid. Please place your tiles to create a word horizontally or vertically"});
+      webtendo.sendToClient(x.clientId, {error: result.error});
       webtendo.sendToClient(x.clientId, {hand: hand});
       renderBoard();
       return;
     }
     isFirstTurn = false;
-    app.players[x.clientId].score = app.players[x.clientId].score + points;
-    webtendo.sendToClient(x.clientId, {points: points, score: app.players[x.clientId].score, message: "You got " + points + " points!"});
+    app.players[x.clientId].score = app.players[x.clientId].score + result.points;
+    webtendo.sendToClient(x.clientId, {points: result.points, score: app.players[x.clientId].score, message: "You got " + result.points + " points!"});
 
     // draw new tiles
     var hand = app.players[x.clientId].hand;
@@ -565,6 +565,11 @@ var TILE_TYPES = {
                 letter_mulltiplier: 1,
                 word_multiplier: 3,
                 name: "TRIPLE WORD SCORE"},
+  CENTER: {positions: [{x: 7, y: 7}],
+           bg_color: "#ff9bf3",
+           name: "✩",
+           letter_mulltiplier: 1,
+           word_multiplier: 2},
 }
 
 function getTileTypeForPoints(position) {
@@ -613,9 +618,13 @@ function renderSquare(position, edgeStyle, letter) {
     ctx.font = "10px Courier New";
     ctx.fillStyle = "black";
     var words = tileType.name.split(' ');
-    for (var i = 0; i < words.length; i++) {
-      var w = words[i];
-      ctx.fillText(w, offsetX + 40 * position.x + 10 + 1, 40 * position.y + 18 + 10 * i + 1);
+    if (words.length === 3) {
+      for (var i = 0; i < words.length; i++) {
+        var w = words[i];
+        ctx.fillText(w, offsetX + 40 * position.x + 10 + 1, 40 * position.y + 18 + 10 * i + 1);
+      }
+    } else if (words.length === 1) {
+      ctx.fillText(words[0], offsetX + 40 * position.x + 20 + 1, 40 * position.y + 18 + 20 + 1);
     }
   }
   ctx.beginPath();
