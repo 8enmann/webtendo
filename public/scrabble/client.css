@@ -152,3 +152,20 @@ body {
 	  border-left: 100px solid white;
 	  border-bottom: 50px solid transparent;
 }
+
+.butterbar
+{
+    height: auto;
+    background-color: #f9edbe;
+    width: auto;
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 0px;
+    line-height: 200%;
+    color: #555;
+    padding-left: 5px;
+    padding-right: 5px;
+    display: none;
+    border-radius: 2px;
+}

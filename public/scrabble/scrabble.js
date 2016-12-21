@@ -421,7 +421,7 @@ function sendResultToClient(playerId, result) {
     return;
   }
   app.players[playerId].score = app.players[playerId].score + result.points;
-  webtendo.sendToClient(playerId, {points: result.points, score: app.players[playerId].score, message: "You got " + result.points + " points!"});
+  webtendo.sendToClient(playerId, {points: result.points, score: app.players[playerId].score, message: `You got ${result.points} points!`});
   if (scrabbleBag.length == 0) {
     var winner = _.max(_.keys(app.players), function(k) {
       return app.players[k].score;

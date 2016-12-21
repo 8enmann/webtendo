@@ -112,7 +112,7 @@ webtendo.callbacks.onMessageReceived = function(x) {
   console.log(x);
 
   if (x.error) {
-    alert(x.error);
+    showMessage(x.error);
     return;
   }
 
@@ -139,8 +139,19 @@ webtendo.callbacks.onMessageReceived = function(x) {
 
   if (x.message) {
     client.vibrate();
-    alert(x.message);
+    showMessage(x.message);
   }
+}
+
+function showMessage(message) {
+  var butterbar = $(`<div class="butterbar">${message}</div>`);
+  $("body").prepend(butterbar);
+  butterbar.slideDown("slow");
+  setTimeout(function() {
+    butterbar.slideUp("slow", function() {
+      butterbar.remove();
+    });
+  }, 2000);
 }
 
 function setName() {
