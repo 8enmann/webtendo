@@ -399,6 +399,8 @@ webtendo.callbacks.onMessageReceived = function(x) {
   }
   if (x.action === "moveCursor") {
     handleMoveCursor(x.value);
+  } else if (x.action === "reset") {
+    resetTurn(x.clientId);
   } else if (x.action === "play_letter") {
     playLetter(x.value);
   } else if (x.action === "finish_turn") {
@@ -406,18 +408,24 @@ webtendo.callbacks.onMessageReceived = function(x) {
   }
 }
 
+function resetTurn(playerId, error) {
+  // reject all tiles that were played
+  var hand = app.players[playerId].hand;
+  _.each(currentlyPlayedPositions, function(p) {
+    hand.push(board[p.x][p.y]);
+    board[p.x][p.y] = null;
+  });
+  currentlyPlayedPositions = [];
+  if (error) {
+    webtendo.sendToClient(playerId, {error: error});
+  }
+  webtendo.sendToClient(playerId, {hand: hand});
+  renderBoard();
+}
+
 function sendResultToClient(playerId, result) {
   if (result.points < 0) {
-    // reject all tiles that were played
-    var hand = app.players[playerId].hand;
-    _.each(currentlyPlayedPositions, function(p) {
-      hand.push(board[p.x][p.y]);
-      board[p.x][p.y] = null;
-    });
-    currentlyPlayedPositions = [];
-    webtendo.sendToClient(playerId, {error: result.error});
-    webtendo.sendToClient(playerId, {hand: hand});
-    renderBoard();
+    resetTurn(playerId, result.error);
     return;
   }
   app.players[playerId].score = app.players[playerId].score + result.points;

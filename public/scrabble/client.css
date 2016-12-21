@@ -81,10 +81,7 @@ body {
     flex-direction: column;
 }
 .btn-play {
-    padding: 20px;
-    width: 100%;
     background-color: #2196F3;
-    text-transform: uppercase;
 }
 .bottom {
     display: flex;
@@ -152,6 +149,26 @@ body {
 	  border-left: 100px solid white;
 	  border-bottom: 50px solid transparent;
 }
+
+#action_buttons {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    flex-direction: row;
+}
+
+.ctrl-btn {
+    flex: 1;
+    padding: 20px;
+    text-transform: uppercase;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.btn-danger {
+    background-color: red;
+}
+
 
 .butterbar
 {

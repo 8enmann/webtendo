@@ -95,14 +95,15 @@ function updateActionButtons() {
   if (gameStarted) { //$("#hand").children().length > 0) {
     // play buttons
     $("#action_buttons").append(" \
-        <button class='btn-play touch-region' data-buttonvalue='play=true'>Play Letter</button> \
-        <button class='btn-play touch-region' data-buttonvalue='submit=true'>Finish Turn</button>");
+        <i class='fa fa-undo ctrl-btn btn-danger touch-region' data-buttonvalue='reset=true' aria-hidden='true'></i> \
+        <i class='fa fa-play ctrl-btn btn-play touch-region' data-buttonvalue='play=true' aria-hidden='true'></i> \
+        <button class='ctrl-btn btn-play touch-region' data-buttonvalue='submit=true'>Done</button>");
   } else if (everyoneReady) {
     $("#action_buttons").append(" \
-        <button class='btn-play touch-region' data-buttonvalue='start=true'>Start Game!</button>");
+        <button class='ctrl-btn btn-play touch-region' data-buttonvalue='start=true'>Start Game!</button>");
   } else {
     $("#action_buttons").append(" \
-        <button class='btn-play touch-region' data-buttonvalue='ready=true'>Ready</button>");
+        <button class='ctrl-btn btn-play touch-region' data-buttonvalue='ready=true'>Ready</button>");
   }
 }
 updateInfo();
@@ -204,6 +205,12 @@ client.callbacks.onTouch = function(e, touch, region) {
       updateInfo();
     } else if (params['character']) {
       selectCharacter(e, params['character']);
+    } else if (params['reset']) {
+      client.sendToHost({
+        action: 'reset',
+        value: true,
+      });
+      return;
     } else if (params['play']) {
       if (_.isUndefined(selectedCharacter) || _.isNull(selectedCharacter)) {
         alert("Please select a character first!");
