@@ -81,10 +81,7 @@ body {
 }
 
 .btn-play {
-    padding: 20px;
-    width: 100%;
     background-color: #2196F3;
-    text-transform: uppercase;
 }
 
 .bottom {
@@ -146,4 +143,41 @@ body {
     height: 100px;
     margin: 0 auto;
     position: relative;
+}
+
+#action_buttons {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    flex-direction: row;
+}
+
+.ctrl-btn {
+    flex: 1;
+    padding: 20px;
+    text-transform: uppercase;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.btn-danger {
+    background-color: red;
+}
+
+
+.butterbar
+{
+    height: auto;
+    background-color: #f9edbe;
+    width: auto;
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 0px;
+    line-height: 200%;
+    color: #555;
+    padding-left: 5px;
+    padding-right: 5px;
+    display: none;
+    border-radius: 2px;
 }
