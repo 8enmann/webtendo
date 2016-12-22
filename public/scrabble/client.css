@@ -145,23 +145,17 @@ body {
     position: relative;
 }
 
-#action_buttons {
-    display: flex;
-    justify-content: space-between;
-    padding: 15px;
-    flex-direction: row;
-}
-
 .ctrl-btn {
     flex: 1;
-    padding: 20px;
+    height: 50px;
+    line-height: 50px;
+    margin-right: 2px;
     text-transform: uppercase;
-    margin-left: 20px;
-    margin-right: 20px;
+    text-align: center;
 }
 
 .btn-danger {
-    background-color: red;
+    background-color: #F44336;
 }
 
 
