@@ -1,7 +1,7 @@
 body {
     font-family: sans-serif;
     background-color: #404040;
-    color:white;
+    color: white;
     margin: 0;
     padding: 0;
     justify-content: space-between;
@@ -12,10 +12,10 @@ body {
 }
 
 .fullscreen {
-    position:absolute;
-    top:0;
+    position: absolute;
+    top: 0;
     width: 3em;
-    background-color:white;
+    background-color: white;
     margin: 4px;
 }
 
@@ -39,10 +39,7 @@ body {
 }
 
 .ctrl-left {
-    display: flex;
     flex: 1;
-    flex-direction:column;
-    justify-content: center;
 }
 
 .info {
@@ -68,87 +65,85 @@ body {
     flex: 1;
     flex-direction: column;
 }
+
 #hand {
     display: block;
     width: 100%;
     flex: 1;
     flex-direction: row;
 }
+
 .ctrl-right {
     height: 100%;
-    width:50%;
+    width: 50%;
     display: flex;
     flex-direction: column;
 }
+
 .btn-play {
     padding: 20px;
     width: 100%;
     background-color: #2196F3;
     text-transform: uppercase;
 }
+
 .bottom {
     display: flex;
     flex: 1;
     justify-content: center;
     align-items: center;
 }
+
 #latency {
     position: absolute;
     bottom: 0;
     margin: 0px;
     opacity: .5;
 }
-.dpad {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-.dpad .region {
-    flex: 1;
-    margin: 10px;
-    flex-direction: row;
-    justify-content: center;
-    margin: 0 auto;
-}
-.region.middle {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    margin: 0;
-}
-
-.region > .btn {
-    margin: 8px;
-}
 
 .triangle-up {
-	  width: 0;
-	  height: 0;
-	  border-left: 50px solid transparent;
-	  border-right: 50px solid transparent;
-	  border-bottom: 100px solid white;
+    width: 0;
+    height: 0;
+    border-left: 50px solid transparent;
+    border-right: 50px solid transparent;
+    border-bottom: 100px solid white;
+    position: absolute;
+    bottom: 100px;
 }
 
 .triangle-down {
-	  width: 0;
-	  height: 0;
-	  border-left: 50px solid transparent;
-	  border-right: 50px solid transparent;
-	  border-top: 100px solid white;
+    width: 0;
+    height: 0;
+    border-left: 50px solid transparent;
+    border-right: 50px solid transparent;
+    border-top: 100px solid white;
+    position: absolute;
+    top: 100px;
 }
 
 .triangle-left {
-	  width: 0;
-	  height: 0;
-	  border-top: 50px solid transparent;
-	  border-right: 100px solid white;
-	  border-bottom: 50px solid transparent;
+    width: 0;
+    height: 0;
+    border-top: 50px solid transparent;
+    border-right: 100px solid white;
+    border-bottom: 50px solid transparent;
+    position: absolute;
+    right: 100px;
 }
 
 .triangle-right {
-	  width: 0;
-	  height: 0;
-	  border-top: 50px solid transparent;
-	  border-left: 100px solid white;
-	  border-bottom: 50px solid transparent;
+    width: 0;
+    height: 0;
+    border-top: 50px solid transparent;
+    border-left: 100px solid white;
+    border-bottom: 50px solid transparent;
+    position: absolute;
+    left: 100px;
+}
+
+.dpad.box {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+    position: relative;
 }
