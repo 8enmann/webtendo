@@ -95,8 +95,8 @@ function updateActionButtons() {
   if (gameStarted) { //$("#hand").children().length > 0) {
     // play buttons
     $("#action_buttons").append(" \
-        <div class='ctrl-btn btn-danger touch-region' data-buttonvalue='reset=true' aria-hidden='true'>↺</div> \
-        <div class='ctrl-btn btn-play touch-region' data-buttonvalue='play=true' aria-hidden='true'>▶︎</div> \
+        <div class='ctrl-btn btn-danger touch-region' data-buttonvalue='reset=true' aria-hidden='true'>UNDO</div> \
+        <div class='ctrl-btn btn-play touch-region' data-buttonvalue='play=true' aria-hidden='true'>PLAY</div> \
         <div class='ctrl-btn btn-play touch-region' data-buttonvalue='submit=true'>Done</div>");
   } else if (everyoneReady) {
     $("#action_buttons").append(" \
