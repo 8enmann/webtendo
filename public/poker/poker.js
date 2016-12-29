@@ -13,7 +13,7 @@ var deck = new Deck();
 var bigBlindIndex = 0;
 var lastMessageDate = 0;
 const STARTING_MONEY = 200;
-const AUTO_BETTING = true;
+const AUTO_BETTING = false;
 
 let app = new Vue({
   el: '#app',
