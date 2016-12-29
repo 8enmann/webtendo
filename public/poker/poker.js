@@ -13,7 +13,7 @@ var deck = new Deck();
 var bigBlindIndex = 0;
 var lastMessageDate = 0;
 const STARTING_MONEY = 200;
-const AUTO_BETTING = false;
+const AUTO_BETTING = true;
 
 let app = new Vue({
   el: '#app',
@@ -167,11 +167,9 @@ function update(modifier) {
     }
   }else if(stages[app.currentStageIndex]=='3'||stages[app.currentStageIndex]=='1'){
     //reveal some cards
-    let newCards = [];
     for(let i=0;i<Number(stages[app.currentStageIndex]);i++){
-      newCards.push(deck.drawCard());
+      app.sharedHand.cards.push(deck.drawCard());//add a card without resorting the hand
     }
-    app.sharedHand = app.sharedHand.cloneAndCombine(new Hand(newCards));
     app.currentStageIndex++;//advance to next stage
   }else if(stages[app.currentStageIndex]=='Reveal'){
     determineWinners();
@@ -214,8 +212,8 @@ function findSubPotWinners(players){
   //search the players list to find the first player who has commitBet>0 (there must be at least one)
   //it may not be the 0th player (best hand), since he may be all-in with a small amount, and not participating in this sub-pot
   let winnerList = [];
-  for(let i=1;i<players.length;i++){
-    if(players[i].committedBet>0){
+  for(let i=0;i<players.length;i++){
+    if(players[i].committedBet>0&&players[i].folded==false){
       winnerList.push(players[i]);
       break;
     }
@@ -223,7 +221,7 @@ function findSubPotWinners(players){
   //**a player can only win (part of) a subpot if he is invested in it (i.e. committedBet>0).
   let bestHandValue = winnerList[0].finalHand.handValue;
   for(let i=1;i<players.length;i++){
-    if(players[i].finalHand.handValue==bestHandValue&&players[i].committedBet>0)
+    if(players[i].finalHand.handValue==bestHandValue&&players[i].committedBet>0&&players[i].folded==false)
       winnerList.push(players[i]);
   }
   return winnerList;
