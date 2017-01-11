@@ -27,6 +27,7 @@ h1 {
 
 .games-section {
   text-align: center;
+  clear: both;
 }
 
 .room-input {
@@ -35,21 +36,50 @@ h1 {
   border-radius: .25rem;
   border: 1px solid #ddd;
   padding: .5rem .75rem;
+  font-size: 1rem;
+  color: #00a1d6;
 }
 
 .role-options {
-  display: flex;
   background-color: #fff;
   color: black;
+  width: 100%;
+  display: flex;
 }
 
 .btn-client,
 .btn-host {
-  border-radius: .25rem;
   padding: .75rem;
   display: block;
   margin: 0 auto;
-  flex: 50%;
+  width: 50%;
+  float: left;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.btn-client:hover,
+.btn-host:hover {
+  background-color: #eee;
+}
+
+.btn-client:active,
+.btn-host:active {
+  outline: none;
+}
+
+.selected {
+  color: #00a1d6;
+  font-weight: bold;
+}
+
+.selected rect {
+  stroke: #00a1d6;
+}
+
+.role-options::after {
+  clear: both;
 }
 
 
@@ -57,16 +87,36 @@ h1 {
   list-style-type: none;
   margin: 0;
   padding: 0;
+  font-size: 1.5rem;
 }
 
 .game-list li {
   width: 33.3333%;
   float: left;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+.game-list a {
+  display: inline-block;
+  width: 100%;
+  padding: 1rem;
+  border-radius: .25rem;
+  border: 1px solid #eee;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.game-list a:hover {
+  background-color: #eee;
 }
 
 .game-list::after {
   clear: both;
+  content: '';
+  display: block;
 }
+
 
 @media screen and (max-width: 600px) {
   .game-list li {

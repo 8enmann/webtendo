@@ -1,6 +1,7 @@
 'use strict';
 
 import io from 'socket.io-client';
+import $ from 'jquery';
 // import * as analytics from './analytics';
 
 let socket = io.connect();
@@ -25,7 +26,6 @@ el.addEventListener("input", e => {
 
 // Preserve hash on navigation.
 let links = document.getElementsByTagName('a');
-let currentRole = 'client';
 for (let i = 0; i < links.length; i++) {
   let link = links[i];
   if (!link.dataset.game) {
@@ -42,9 +42,20 @@ for (let i = 0; i < links.length; i++) {
 const clientButton = document.getElementsByClassName('btn-client')[0];
 const hostButton = document.getElementsByClassName('btn-host')[0];
 
+let currentRole = 'client';
 function changeRole(role) {
-  return () => { currentRole = role; };
+  return () => {
+    $('button.selected').removeClass('selected');
+    if (role === 'client') {
+      $('.btn-client').addClass('selected');
+    } else if (role === 'host') {
+      $('.btn-host').addClass('selected');
+    }
+    currentRole = role;
+  };
 }
+
+changeRole('client')();
 
 clientButton.addEventListener('touchend', changeRole('client'));
 clientButton.addEventListener('click', changeRole('client'));
