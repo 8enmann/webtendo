@@ -591,7 +591,7 @@ var TILE_TYPES = {
                 name: "TRIPLE WORD SCORE"},
   CENTER: {positions: [{x: 7, y: 7}],
            bg_color: "#ff9bf3",
-           name: "✩",
+           name: "DOUBLE WORD SCORE",
            letter_mulltiplier: 1,
            word_multiplier: 2},
 }
