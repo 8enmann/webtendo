@@ -25,15 +25,29 @@ el.addEventListener("input", e => {
 
 // Preserve hash on navigation.
 let links = document.getElementsByTagName('a');
+let currentRole = 'client';
 for (let i = 0; i < links.length; i++) {
   let link = links[i];
   if (!link.dataset.game) {
     continue;
   }
   let ontouch = e => {
-    window.location.pathname = `/${link.dataset.game}/${link.dataset.role}.html`;
+    window.location.pathname = `/${link.dataset.game}/${currentRole}.html`;
   }
   // Both mobile and desktop.
   link.addEventListener('touchend', ontouch);
   link.addEventListener('click', ontouch);
 }
+
+const clientButton = document.getElementsByClassName('btn-client')[0];
+const hostButton = document.getElementsByClassName('btn-host')[0];
+
+function changeRole(role) {
+  return () => { currentRole = role; };
+}
+
+clientButton.addEventListener('touchend', changeRole('client'));
+clientButton.addEventListener('click', changeRole('client'));
+
+hostButton.addEventListener('touchend', changeRole('host'));
+hostButton.addEventListener('click', changeRole('host'));
