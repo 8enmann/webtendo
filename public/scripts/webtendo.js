@@ -79,6 +79,8 @@ if (!clientId) {
   clientId = Math.random().toString(36).substr(2, 10);
   storage.setItem('clientId', clientId);
 }
+// Allow the same browser to function as client and host even in prod.
+clientId += isHost ? 'h' : 'c';
 maybeLog()('Session clientId ' + clientId);
 
 /****************************************************************************
