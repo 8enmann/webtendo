@@ -1,5 +1,7 @@
 body {
     height: 100vh;
+    color: white;
+    background-color: #404040;
 }
 .bottomleft {
     opacity: .5;

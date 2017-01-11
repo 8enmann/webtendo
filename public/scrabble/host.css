@@ -2,6 +2,8 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: row;
+    color: white;
+    background-color: #404040;
 }
 canvas {
     height: 620px;
