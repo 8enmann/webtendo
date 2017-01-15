@@ -280,7 +280,7 @@ function calculatePointsHorizontal(position) {
 }
 
 function finishPlayerTurn(playerId) {
-  var baseErrorMessage = "Your turn was not valid";
+  var baseErrorMessage = "Your turn was not valid. Try again.";
   var numberOfLettersPlayed = 0;
   for (var i = 0; i < 15; i++) {
     for (var j = 0; j < 15; j++) {

@@ -39,15 +39,10 @@ function getRegion(x, y) {
   let check = (x, left, width) => x >= left && x <= left + width;
   let pxToNum = x => Number.parseInt(x.replace('px', ''));
   for (var i = 0; i < regions.length; i++) {
-    let region = $(regions[i]);
-    // Handle d-pad nastiness.
-    let width = region.width() || (pxToNum(region.css('border-left-width')) +
-                                   pxToNum(region.css('border-right-width')));
-    let height = region.height() || (pxToNum(region.css('border-top-width')) +
-                                     pxToNum(region.css('border-bottom-width')));
-    if (check(x, region.offset().left, width) &&
-        check(y, region.offset().top, height)) {
-      return {value: regions[i].dataset.buttonvalue, el: regions[i]};
+    let region = regions[i];
+    if (check(x, $(region).offset().left, region.offsetWidth) &&
+        check(y, $(region).offset().top, region.offsetHeight)) {
+      return {value: region.dataset.buttonvalue, el: region};
     }
   }
 }
