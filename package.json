@@ -32,6 +32,7 @@
     "babel-loader": "^6.2.8",
     "babel-plugin-transform-flow-strip-types": "^6.18.0",
     "babel-preset-latest": "^6.16.0",
+    "standard": "^8.6.0",
     "webpack": "^1.13.3"
   }
 }
