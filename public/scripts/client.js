@@ -102,21 +102,16 @@ function handleClick (e) {
   }
 }
 
-document.body.addEventListener('touchstart', handleTouch)
-document.body.addEventListener('touchmove', handleTouch)
-document.body.addEventListener('touchend', handleTouch)
-document.body.addEventListener('mousedown', handleClick)
-document.body.addEventListener('mouseup', handleClick)
-document.body.addEventListener('mousemove', handleClick)
+document.body.addEventListener('touchstart', handleTouch, {passive:false})
+document.body.addEventListener('touchmove', handleTouch, {passive:false})
+document.body.addEventListener('touchend', handleTouch, {passive:false})
+document.body.addEventListener('mousedown', handleClick, {passive:false})
+document.body.addEventListener('mouseup', handleClick, {passive:false})
+document.body.addEventListener('mousemove', handleClick, {passive:false})
 
-// Disable zoom on iOS 10.
-document.addEventListener('gesturestart', function (e) {
-  e.preventDefault()
-})
-// TODO: replace this with sindresorhus/screenfull.js
 var fullscreenButton = document.getElementById('fullscreen')
 if (fullscreenButton) {
-  fullscreenButton.addEventListener('touchstart', function (e) {
+  fullscreenButton.addEventListener('touchend', function (e) {
     if (!document.documentElement.webkitRequestFullScreen) {
       return
     }
