@@ -24,8 +24,7 @@
     "postinstall": "webpack -p --progress --colors"
   },
   "engines": {
-    "node": "6.6.0",
-    "npm": "3.10.3"
+    "npm": "4.6.1"
   },
   "devDependencies": {
     "babel-core": "^6.18.2",
